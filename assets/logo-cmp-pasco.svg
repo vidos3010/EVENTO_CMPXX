@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Gradientes de Oro Institucional -->
+    <linearGradient id="goldLinear" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE881"/>
+      <stop offset="25%" stop-color="#C8963E"/>
+      <stop offset="50%" stop-color="#FDF4B8"/>
+      <stop offset="75%" stop-color="#A6701E"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+
+    <linearGradient id="blueNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001F3F"/>
+      <stop offset="50%" stop-color="#003366"/>
+      <stop offset="100%" stop-color="#001428"/>
+    </linearGradient>
+
+    <radialGradient id="goldRadial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF5C0"/>
+      <stop offset="60%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#8C5814"/>
+    </radialGradient>
+
+    <!-- Sombra elegante -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Ruta circular para el texto superior -->
+    <path id="textArcTop" d="M 75,250 A 175,175 0 1,1 425,250" fill="none"/>
+    <!-- Ruta circular para el texto inferior -->
+    <path id="textArcBottom" d="M 425,250 A 175,175 0 0,1 75,250" fill="none"/>
+  </defs>
+
+  <!-- Anillo Exterior Dorado con Sombra -->
+  <circle cx="250" cy="250" r="235" fill="url(#goldLinear)" filter="url(#dropShadow)"/>
+  
+  <!-- Anillo Exterior Biselado -->
+  <circle cx="250" cy="250" r="226" fill="#001428"/>
+  <circle cx="250" cy="250" r="222" fill="url(#blueNavy)"/>
+
+  <!-- Anillo Central Dorado -->
+  <circle cx="250" cy="250" r="162" fill="url(#goldLinear)"/>
+  <circle cx="250" cy="250" r="156" fill="#FFFFFF"/>
+
+  <!-- Rayos / Sol Incaico de Fondo Central -->
+  <g opacity="0.12">
+    <circle cx="250" cy="250" r="150" fill="#D4AF37"/>
+    <path d="M250,95 L250,405 M95,250 L405,250 M140,140 L360,360 M140,360 L360,140" stroke="#003366" stroke-width="8"/>
+  </g>
+
+  <!-- Laureles de la Victoria y Excelencia Médica (Izquierda y Derecha) -->
+  <g fill="url(#goldRadial)" stroke="#8C5814" stroke-width="0.8">
+    <!-- Laureles Izquierda -->
+    <path d="M165,280 C150,260 145,230 155,200 C158,215 168,230 172,250 Z"/>
+    <path d="M152,240 C138,220 135,190 148,165 C150,180 160,195 162,215 Z"/>
+    <path d="M150,190 C140,165 145,140 160,120 C160,135 168,150 168,170 Z"/>
+    <path d="M162,145 C158,125 170,105 185,90 C182,105 185,120 180,135 Z"/>
+
+    <!-- Laureles Derecha -->
+    <path d="M335,280 C350,260 355,230 345,200 C342,215 332,230 328,250 Z"/>
+    <path d="M348,240 C362,220 365,190 352,165 C350,180 340,195 338,215 Z"/>
+    <path d="M350,190 C360,165 355,140 340,120 C340,135 332,150 332,170 Z"/>
+    <path d="M338,145 C342,125 330,105 315,90 C318,105 315,120 320,135 Z"/>
+
+    <!-- Lazo inferior -->
+    <path d="M230,355 C240,345 260,345 270,355 C260,365 240,365 230,355 Z"/>
+    <path d="M235,355 L215,385 L235,375 L245,390 Z"/>
+    <path d="M265,355 L285,385 L265,375 L255,390 Z"/>
+  </g>
+
+  <!-- Vara de Esculapio / Caduceo Médico Central -->
+  <!-- Vara Dorada Central -->
+  <path d="M246,120 L254,120 L253,355 L247,355 Z" fill="url(#goldLinear)" stroke="#8C5814" stroke-width="1.5"/>
+  <!-- Pomo Superior de la Vara -->
+  <circle cx="250" cy="115" r="14" fill="url(#goldLinear)" stroke="#8C5814" stroke-width="1.5"/>
+  <circle cx="250" cy="115" r="9" fill="#FFF5C0"/>
+
+  <!-- Serpiente de la Medicina (Asclepio) Entrelazada en Relieve -->
+  <!-- Cuerpo de la Serpiente -->
+  <path d="M250,135 
+           C285,150 285,185 250,200 
+           C215,215 215,250 250,265 
+           C285,280 285,315 250,330 
+           C235,338 238,350 250,355" 
+        fill="none" 
+        stroke="url(#blueNavy)" 
+        stroke-width="16" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+
+  <path d="M250,135 
+           C285,150 285,185 250,200 
+           C215,215 215,250 250,265 
+           C285,280 285,315 250,330 
+           C235,338 238,350 250,355" 
+        fill="none" 
+        stroke="url(#goldLinear)" 
+        stroke-width="10" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+
+  <!-- Cabeza de la Serpiente mirando hacia el pomo -->
+  <path d="M245,135 C235,130 230,120 235,110 C242,108 252,112 255,122 C255,128 250,134 245,135 Z" fill="url(#goldRadial)" stroke="#8C5814" stroke-width="1.2"/>
+  <circle cx="242" cy="116" r="2.5" fill="#001F3F"/>
+
+  <!-- Año de Fundación Institucional -->
+  <rect x="220" y="325" width="60" height="22" rx="6" fill="#003366" stroke="url(#goldLinear)" stroke-width="1.5"/>
+  <text x="250" y="340" fill="#FDF4B8" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="12" text-anchor="middle" letter-spacing="1.5">1964</text>
+
+  <!-- TEXTO CIRCULAR SUPERIOR: COLEGIO MÉDICO DEL PERÚ -->
+  <text fill="#FFFFFF" font-family="'Cinzel', 'Times New Roman', Georgia, serif" font-weight="800" font-size="21.5" letter-spacing="3.5">
+    <textPath href="#textArcTop" startOffset="50%" text-anchor="middle">
+      COLEGIO MÉDICO DEL PERÚ
+    </textPath>
+  </text>
+
+  <!-- Estrellas Separadoras -->
+  <g fill="url(#goldLinear)">
+    <polygon points="80,248 83,254 90,254 84,258 86,264 80,260 74,264 76,258 70,254 77,254" />
+    <polygon points="420,248 423,254 430,254 424,258 426,264 420,260 414,264 416,258 410,254 417,254" />
+  </g>
+
+  <!-- TEXTO CIRCULAR INFERIOR: CONSEJO REGIONAL XX PASCO -->
+  <text fill="#FDF4B8" font-family="'Cinzel', 'Times New Roman', Georgia, serif" font-weight="800" font-size="20" letter-spacing="3.8">
+    <textPath href="#textArcBottom" startOffset="50%" text-anchor="middle">
+      CONSEJO REGIONAL XX PASCO
+    </textPath>
+  </text>
+</svg>

@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>Sistema de Reservas y Validación QR | CMP XX Pasco</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cmp: {
+              purple: '#4a154b',
+              darkpurple: '#200530',
+              lightpurple: '#7e22ce',
+              softpurple: '#fbf5ff',
+              gold: '#dfb76c',
+              darkgold: '#c5a059',
+              lightgold: '#fef3cd'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Estilos Personalizados con Cache Busting -->
+  <link rel="stylesheet" href="css/styles.css?v=4.2">
+
+  <!-- Librerías de Soporte (CDN) -->
+  <!-- QRCode.js para generación de códigos QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- HTML5-QRCode para escaneo con cámara -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- html2canvas para exportar carnet a PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- jsPDF para exportar a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- SheetJS para exportar a Excel (.xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Canvas Confetti para efecto de celebración -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body class="bg-slate-100 text-slate-800 flex flex-col min-h-full pb-20 md:pb-6">
+
+  <!-- ========================================================================= -->
+  <!-- PANTALLA DE CARGA OFICIAL (SPLASH SCREEN INSTITUCIONAL 3 SEGUNDOS)         -->
+  <!-- ========================================================================= -->
+  <div id="app-splash-screen">
+    <!-- Resplandor Áureo de Fondo -->
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-400/10 via-transparent to-transparent pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col items-center text-center px-4 max-w-md w-full animate-fadeIn">
+      
+      <!-- Contenedor del Logotipo con Resplandor Áureo -->
+      <div class="splash-logo-container">
+        <div class="splash-glow-ring"></div>
+        <div class="splash-card-box">
+          <img id="splash-logo-img" src="assets/logo.png" alt="Logo Colegio Médico del Perú" class="w-full h-full object-contain" onerror="this.src='assets/logo.png'">
+        </div>
+      </div>
+
+      <!-- Textos Institucionales -->
+      <span class="inline-block px-3.5 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/40 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest mb-2 shadow-xs">
+        🏛️ Sistema Oficial de Gestión & Pases QR
+      </span>
+
+      <h1 class="text-xl sm:text-2xl font-black font-cinzel text-white tracking-wide leading-tight drop-shadow-md">
+        Colegio Médico del Perú
+      </h1>
+
+      <p class="text-xs sm:text-sm font-bold text-amber-200/90 tracking-wider mt-1">
+        Consejo Regional XX Pasco
+      </p>
+
+      <p class="text-[10px] text-purple-200/70 font-semibold mt-1 italic">
+        Gestión 2024 – 2027 • Ética, Ciencia y Solidaridad
+      </p>
+
+      <!-- Barra de Progreso Dinámica -->
+      <div class="mt-7 w-full flex flex-col items-center">
+        <div class="splash-progress-track">
+          <div id="splash-progress-bar" class="splash-progress-fill"></div>
+        </div>
+
+        <!-- Indicador de Carga y Micro-Estado -->
+        <div class="flex items-center justify-between w-[320px] max-w-[85vw] mt-2.5 text-[11px] font-semibold text-purple-200">
+          <span id="splash-status-text" class="truncate text-left text-amber-200 font-bold">Iniciando sistema...</span>
+          <span id="splash-percent-text" class="font-mono text-amber-300 font-black shrink-0 ml-2">0%</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pie del Splash Screen -->
+    <div class="absolute bottom-5 text-center text-[10px] text-purple-300/60 font-medium">
+      Día de la Medicina Peruana 2026 — Plataforma Digital Segura
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- CABECERA INSTITUCIONAL (HEADER EN MORADO Y ORO)                           -->
+  <!-- ========================================================================= -->
+  <header class="purple-gradient bg-[#200530] text-white shadow-xl sticky top-0 z-30 border-b-2 border-[#dfb76c]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+      
+      <!-- Logotipo & Título -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="App.cambiarPestana('inscripcion')">
+        <div class="w-12 h-12 rounded-xl bg-white p-1 shadow-md flex items-center justify-center flex-shrink-0 border-2 border-amber-400 overflow-hidden">
+          <img id="header-logo-img" src="assets/logo.png" alt="Logo CMP XX Pasco" class="w-full h-full object-contain rounded-lg">
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs uppercase font-extrabold tracking-widest text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded border border-amber-400/40">
+              CR XX PASCO
+            </span>
+            <span class="text-[11px] text-purple-200 hidden sm:inline font-medium">Gestión de Eventos & QR</span>
+          </div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white font-cinzel leading-tight mt-0.5">
+            Colegio Médico del Perú
+          </h1>
+        </div>
+      </div>
+
+      <!-- Navegación Desktop -->
+      <nav class="hidden md:flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/15">
+        <button data-tab-target="inscripcion" class="nav-tab-btn px-4 py-2 rounded-lg text-xs font-bold transition-all bg-amber-400 text-[#200530] shadow-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          <span>Inscripción</span>
+        </button>
+
+        <button data-tab-target="boleto" class="nav-tab-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-white/90 hover:bg-white/15 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+          </svg>
+          <span>Mi Boleto</span>
+        </button>
+
+        <button data-tab-target="validacion" class="nav-tab-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-white/90 hover:bg-white/15 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+          </svg>
+          <span>Validación QR</span>
+        </button>
+
+        <button data-tab-target="admin" class="nav-tab-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-white/90 hover:bg-white/15 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          <span>Asistencia & Excel</span>
+        </button>
+
+        <button data-tab-target="configuracion" class="nav-tab-btn px-3 py-2 rounded-lg text-xs font-bold transition-all text-white/90 hover:bg-white/15 flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+
+        <!-- Botón de Cerrar Sesión (Visible cuando está autenticado) -->
+        <button id="btn-header-logout" onclick="App.cerrarSesion()" title="Cerrar Sesión Administrativa" class="hidden px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-300 hover:bg-rose-500/20 border border-rose-400/30 flex items-center gap-1 transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          <span class="hidden lg:inline text-[11px]">Salir</span>
+        </button>
+      </nav>
+
+      <!-- Botón Salir Móvil (Visible cuando está autenticado) -->
+      <button id="btn-mobile-logout" onclick="App.cerrarSesion()" title="Cerrar Sesión" class="md:hidden hidden px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-300 hover:bg-rose-500/20 border border-rose-400/30 flex items-center gap-1 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span class="text-[11px]">Salir</span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- CONTENEDOR PRINCIPAL                                                      -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+    <!-- ======================================================================= -->
+    <!-- SECCIÓN 1: FORMULARIO DE INSCRIPCIÓN Y RESERVA                         -->
+    <!-- ======================================================================= -->
+    <section id="section-inscripcion" class="app-section space-y-6">
+      
+      <!-- Banner Informativo del Evento (Día de la Medicina Peruana - Afiche Oficial) -->
+      <div class="card-mesh bg-[#380036] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border-2 border-[#dfb76c]/60">
+        
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
+          <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-2 shadow-2xl flex-shrink-0 border-2 border-amber-400 overflow-hidden flex items-center justify-center">
+            <img id="hero-logo-img" src="assets/logo.png" alt="Emblema Oficial CMP Pasco" class="w-full h-full object-contain">
+          </div>
+          <div class="flex-1 text-center sm:text-left">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400 text-[#200530] text-xs font-black uppercase tracking-wider rounded-full shadow-md">
+                🎉 Evento Oficial CMP
+              </span>
+              <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-400/20 text-amber-300 text-xs font-bold rounded-full border border-amber-400/40">
+                ⭐ Noche de Confraternidad
+              </span>
+            </div>
+
+            <h2 class="text-2xl sm:text-4xl font-black font-cinzel leading-tight tracking-tight text-white">
+              ¡Feliz Día de la Medicina Peruana!
+            </h2>
+            
+            <p class="text-xs sm:text-sm text-purple-100 mt-2 leading-relaxed font-medium">
+              El <strong>Consejo Regional XX Pasco - CMP</strong>, invita a disfrutar de una gran noche de diversión y confraternidad con música en vivo y la presentación estelar de dos grandes agrupaciones.
+            </p>
+
+            <!-- Grupos Musicales Invitados -->
+            <div class="inline-flex flex-wrap items-center gap-2 mt-3 px-3.5 py-1.5 bg-black/40 rounded-xl border border-amber-400/30 text-xs font-bold text-amber-300">
+              <span>🎤 Con la presentación de:</span>
+              <span class="text-white font-extrabold">K'jantu Los Dávila</span>
+              <span class="text-amber-400">•</span>
+              <span class="text-white font-extrabold">Orquesta La Penca</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badges de detalles del evento -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5 pt-4 border-t border-white/15 text-xs relative z-10">
+          
+          <div class="flex items-center gap-3 p-2.5 bg-white/10 rounded-xl border border-white/10">
+            <span class="text-xl">📅</span>
+            <div>
+              <p class="text-amber-300 text-[10px] uppercase font-black tracking-wider">Fecha</p>
+              <p class="font-bold text-white text-xs">Miércoles 07 de Octubre, 2026</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-2.5 bg-white/10 rounded-xl border border-white/10">
+            <span class="text-xl">⏰</span>
+            <div>
+              <p class="text-amber-300 text-[10px] uppercase font-black tracking-wider">Hora</p>
+              <p class="font-bold text-white text-xs">07:00 p. m.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-2.5 bg-white/10 rounded-xl border border-white/10">
+            <span class="text-xl">📍</span>
+            <div>
+              <p class="text-amber-300 text-[10px] uppercase font-black tracking-wider">Lugar</p>
+              <p class="font-bold text-white text-xs">LA KATEDRAL (Pasco)</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Tarjeta del Formulario -->
+      <div id="container-formulario-registro" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Formulario de Reserva para Colegiados</h3>
+            <p class="text-xs text-slate-500">Ingrese sus datos oficiales registrados ante el Colegio Médico</p>
+          </div>
+          <span class="text-xs text-rose-500 font-bold">* Campos requeridos</span>
+        </div>
+
+        <form id="form-registro" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            
+            <!-- N° CMP -->
+            <div>
+              <label for="reg-cmp" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                N° de Colegiatura (CMP) <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="text" id="reg-cmp" required placeholder="Ej: 121642" maxlength="8"
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b] text-sm font-bold text-slate-800 transition-all">
+                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 text-xs font-bold">
+                  CMP
+                </div>
+              </div>
+            </div>
+
+            <!-- Celular / WhatsApp -->
+            <div>
+              <label for="reg-celular" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Celular / WhatsApp <span class="text-rose-500">*</span>
+              </label>
+              <input type="tel" id="reg-celular" required placeholder="Ej: 987654321" maxlength="12"
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b] text-sm font-semibold text-slate-800 transition-all">
+            </div>
+
+            <!-- Nombres y Apellidos (Bloqueado / Solo Lectura) -->
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="reg-nombres" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Nombres y Apellidos Completos <span class="text-rose-500">*</span>
+                </label>
+                <span class="text-[10px] text-purple-900 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                  🔒 Bloqueado (Desde Padrón CMP)
+                </span>
+              </div>
+              <div class="relative">
+                <input type="text" id="reg-nombres" required readonly placeholder="Ingrese su N° CMP para cargar sus nombres automáticamente"
+                  class="w-full px-4 py-3 bg-slate-100/90 border border-slate-300 rounded-xl text-sm font-extrabold text-slate-900 transition-all cursor-not-allowed select-none">
+                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Correo Electrónico -->
+            <div>
+              <label for="reg-correo" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Correo Electrónico (Opcional)
+              </label>
+              <input type="email" id="reg-correo" placeholder="Ej: doctor@cmppasco.org.pe"
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b] text-sm font-semibold text-slate-800 transition-all">
+            </div>
+
+            <!-- Número de Acompañantes -->
+            <div>
+              <label for="reg-acompanantes" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Modalidad de Pase / Acompañante
+              </label>
+              <select id="reg-acompanantes"
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b] text-sm font-bold text-slate-800 transition-all">
+                <option value="0">Solo Médico Titular (Pase Gratuito)</option>
+                <option value="1">Médico + 1 Acompañante (S/ 20.00)</option>
+              </select>
+            </div>
+
+            <!-- Contenedor dinámico de Pago (Yape / Plin / Transferencia Bancaria) -->
+            <div id="container-pago-acompanantes" class="sm:col-span-2 hidden bg-gradient-to-br from-purple-50/90 via-white to-amber-50/60 p-5 sm:p-6 rounded-2xl border-2 border-[#dfb76c] shadow-sm space-y-4 animate-fadeIn">
+              
+              <!-- Resumen de Costo -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#200530] via-[#380036] to-[#54146e] text-white p-4 rounded-xl border border-amber-400/40 shadow-inner">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 bg-amber-400 text-[#200530] rounded-xl flex items-center justify-center font-black text-2xl shadow">
+                    💳
+                  </div>
+                  <div>
+                    <span class="text-xs text-amber-300 font-extrabold block uppercase tracking-wider">Abono por Invitado / Acompañante</span>
+                    <span class="text-[11px] text-purple-200">Titular Colegiado: <strong class="text-amber-300">GRATUITO</strong> • Costo por Acompañante: <strong>S/ 20.00</strong></span>
+                  </div>
+                </div>
+                <div class="text-left sm:text-right bg-black/20 p-2 sm:p-0 rounded-lg">
+                  <span class="text-[10px] text-amber-200 uppercase font-bold block">Total a Abonar</span>
+                  <span id="pago-monto-total" class="text-2xl font-black text-amber-300">S/ 20.00</span>
+                </div>
+              </div>
+
+              <!-- Método de Pago Oficial: Yape -->
+              <div class="pt-1">
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border-2 border-purple-200 shadow-sm flex flex-col justify-between">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="px-3 py-1 bg-purple-700 text-white font-extrabold text-xs rounded-lg flex items-center gap-1.5 shadow-xs">
+                      📱 Yape Oficial
+                    </span>
+                    <span class="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      0% Comisiones • Transferencia Inmediata
+                    </span>
+                  </div>
+
+                  <!-- Contenedor del QR de Yape y Datos -->
+                  <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200">
+                    <!-- Imagen QR Yape con zoom -->
+                    <div class="relative group cursor-pointer shrink-0" onclick="document.getElementById('modal-qr-expandido').classList.remove('hidden')">
+                      <img src="assets/yape_qr.png" alt="QR Yape" class="w-24 h-28 sm:w-28 sm:h-32 object-cover rounded-xl border-2 border-purple-300 shadow transition-transform group-hover:scale-105">
+                      <span class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-black transition-opacity">
+                        🔍 Ampliar QR
+                      </span>
+                    </div>
+
+                    <!-- Datos del número y titular -->
+                    <div class="flex-1 text-center sm:text-left space-y-1.5 min-w-0">
+                      <span class="text-[11px] text-slate-500 font-bold block uppercase tracking-wide">Escanear QR o transferir al número:</span>
+                      
+                      <div class="flex items-center justify-center sm:justify-start gap-2">
+                        <span class="font-mono font-black text-lg text-[#200530]">915 059 045</span>
+                        <button type="button" onclick="navigator.clipboard.writeText('915059045'); App.showToast('¡Número de Yape copiado (915 059 045)!', 'success')" class="text-xs bg-white border border-purple-300 text-purple-900 px-3 py-1 rounded-lg font-bold hover:bg-purple-100 transition-all shadow-xs">
+                          📋 Copiar
+                        </button>
+                      </div>
+
+                      <div class="text-xs text-slate-700 font-bold">
+                        Titular de la cuenta: <span class="text-[#380036] font-black block text-sm sm:inline">Evelyn Corina Castaneda Chamorro</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Registro del Comprobante -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-purple-100">
+                
+                <div>
+                  <label for="reg-metodo-pago" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Medio Utilizado <span class="text-rose-500">*</span>
+                  </label>
+                  <select id="reg-metodo-pago" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#4a154b]">
+                    <option value="Yape">Yape</option>
+                    <option value="Plin">Plin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="reg-nro-operacion" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    N° de Operación / Ref. <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="reg-nro-operacion" placeholder="Ej: 84920481"
+                    class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#4a154b]">
+                </div>
+
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Foto o Captura del Voucher / Yape (Opcional / Recomendado)
+                  </label>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <label class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-2 shadow-sm">
+                      <svg class="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                      <span id="label-voucher-text">Adjuntar Voucher</span>
+                      <input type="file" id="reg-voucher-file" accept="image/*" class="hidden">
+                    </label>
+
+                    <div id="voucher-preview-container" class="hidden flex items-center gap-2.5 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
+                      <img id="voucher-preview-img" src="" alt="Voucher" class="w-8 h-8 object-cover rounded-lg border border-purple-300 shadow">
+                      <span class="text-[11px] text-emerald-800 font-bold">✓ Voucher cargado</span>
+                      <button type="button" id="btn-remove-voucher" class="text-xs text-rose-600 hover:text-rose-800 font-bold ml-1">✕</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Botón de Envío -->
+          <div class="pt-4">
+            <button type="submit" id="btn-submit-registro"
+              class="w-full py-4 px-6 bg-gradient-to-r from-[#200530] via-[#4a154b] to-[#6b21a8] hover:from-[#150220] hover:to-[#3b0d42] text-white font-extrabold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 text-base border border-amber-400/30">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Confirmar Reserva y Generar Boleto QR</span>
+            </button>
+            <p class="text-center text-[11px] text-slate-400 mt-2.5">
+              🔒 Sus datos se registrarán de forma segura en la base de datos oficial del CMP Pasco.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Contenedor del Boleto QR Generado Exitosamente (En la misma pestaña de Inscripción) -->
+      <div id="container-ticket-exitoso-registro" class="hidden space-y-6 animate-fadeIn">
+        
+        <!-- Banner de Felicitación / Éxito -->
+        <div class="bg-gradient-to-r from-[#200530] via-[#4a154b] to-[#6b21a8] p-5 sm:p-6 rounded-2xl border-2 border-[#dfb76c] text-white shadow-xl text-center relative overflow-hidden">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-black uppercase mb-2">
+            <span>✓</span>
+            <span>¡Inscripción Confirmada con Éxito!</span>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-black font-cinzel text-white leading-tight">
+            Su Boleto de Acceso Digital está Listo
+          </h3>
+          <p class="text-xs sm:text-sm text-purple-200 mt-1 max-w-lg mx-auto">
+            Guarde o descargue su código QR oficial. Deberá presentarlo en la entrada del evento.
+          </p>
+          
+          <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+            <button type="button" onclick="RegistroService.mostrarFormularioRegistro()"
+              class="px-4 py-2 bg-white/10 hover:bg-white/20 text-amber-300 font-bold rounded-xl text-xs transition-all border border-amber-400/40 flex items-center gap-1.5 shadow-xs">
+              <span>✏️ Realizar Otra Inscripción</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Renderizado del Pase QR Oficial -->
+        <div id="ticket-inscripcion-render" class="animate-scaleUp">
+          <!-- Renderizado dinámico vía QRManager.renderizarTicket() -->
+        </div>
+
+        <!-- Barra de Acciones de Exportación & Envío (Pestaña Inscripción) -->
+        <div class="max-w-md mx-auto space-y-3 pt-2">
+          
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            
+            <!-- Descargar PNG Ultra HD -->
+            <button type="button" onclick="QRManager.descargarTicketPNG()" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-purple-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-[#4a154b] cursor-pointer">
+              <div class="w-8 h-8 rounded-lg bg-purple-50 text-[#380036] flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <span class="text-xs font-bold text-slate-900">Imagen PNG</span>
+            </button>
+
+            <!-- Descargar PDF Oficial -->
+            <button type="button" onclick="QRManager.descargarTicketPDF()" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-rose-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-rose-300 cursor-pointer">
+              <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <span class="text-xs font-bold text-slate-900">PDF Oficial</span>
+            </button>
+
+            <!-- Enviar a WhatsApp -->
+            <button type="button" onclick="QRManager.compartirWhatsApp()" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-emerald-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-emerald-300 cursor-pointer">
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"></path>
+                </svg>
+              </div>
+              <span class="text-xs font-bold text-slate-900">WhatsApp</span>
+            </button>
+
+            <!-- Imprimir -->
+            <button type="button" onclick="window.print()" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-slate-400 cursor-pointer">
+              <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+              </div>
+              <span class="text-xs font-bold text-slate-900">Imprimir</span>
+            </button>
+
+          </div>
+
+          <!-- Botón de compartir nativo / móvil -->
+          <div class="flex items-center justify-center pt-1">
+            <button type="button" onclick="QRManager.compartirNativo()" class="w-full py-3 bg-gradient-to-r from-[#200530] via-[#3e0c4b] to-[#581878] hover:from-[#150220] hover:to-[#380036] text-amber-300 font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 border border-amber-400/30 cursor-pointer">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+              </svg>
+              <span>Compartir Pase / Guardar en el Celular</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Botón Inferior para Volver al Formulario -->
+        <div class="text-center pt-2">
+          <button type="button" onclick="RegistroService.mostrarFormularioRegistro()"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all border border-slate-300 inline-flex items-center gap-2 shadow-2xs">
+            <span>← Volver al Formulario de Inscripción</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECCIÓN 2: MI BOLETO DIGITAL CON QR (MORADO & ORO)                      -->
+    <!-- ======================================================================= -->
+    <section id="section-boleto" class="app-section hidden space-y-6">
+      
+      <!-- Encabezado Sobrio y Elegante -->
+      <div class="text-center max-w-md mx-auto">
+        <span class="inline-block px-3.5 py-1 bg-amber-50 text-[#380036] text-xs font-extrabold rounded-full mb-2 border border-amber-300">
+          🏛️ Colegio Médico del Perú — CR XX Pasco
+        </span>
+        <h2 class="text-2xl font-black text-slate-900 font-cinzel">Boleto Digital de Acceso</h2>
+        <p class="text-xs text-slate-500 mt-1">
+          Pase oficial e intransferible para la recepción del evento.
+        </p>
+
+        <!-- Buscador por N° CMP & Selector de Boletos -->
+        <div class="mt-4 bg-white p-3.5 rounded-2xl border-2 border-purple-100 shadow-sm text-left space-y-2.5">
+          <label for="input-search-ticket-cmp" class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+            🔍 Buscar mi Boleto por N° de CMP
+          </label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <input type="text" id="input-search-ticket-cmp" placeholder="Ingrese su N° de CMP (Ej: 121642)" maxlength="8"
+                class="w-full pl-9 pr-3 py-2 bg-purple-50/50 border border-purple-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:outline-none transition-all">
+              <span class="absolute left-3 top-2 text-slate-400 font-bold text-xs">🆔</span>
+            </div>
+            <button type="button" id="btn-search-ticket-cmp" class="px-4 py-2 bg-[#380036] hover:bg-[#200530] text-amber-300 font-extrabold text-xs rounded-xl shadow transition-all shrink-0">
+              Buscar
+            </button>
+          </div>
+
+          <!-- Selector rápido de colegiados registrados -->
+          <div class="pt-1 flex items-center gap-2 border-t border-slate-100">
+            <span class="text-[10px] text-slate-400 font-bold shrink-0">O seleccionar de la lista:</span>
+            <select id="select-attendee-ticket" class="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 focus:ring-2 focus:ring-[#4a154b]">
+              <!-- Rellenado dinámico por App.cargarListaAsistentesEnTicket() -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de renderizado del carnet digital -->
+      <div id="printable-ticket-area" class="py-2 flex justify-center">
+        <div id="ticket-container" class="w-full max-w-md transition-all duration-200">
+          <!-- Renderizado dinámico vía QRManager.renderizarTicket() -->
+        </div>
+      </div>
+
+      <!-- Barra de Acciones de Exportación -->
+      <div class="max-w-md mx-auto space-y-3 pt-2">
+        
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          
+          <!-- Descargar PNG Ultra HD -->
+          <button id="btn-download-png" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-purple-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-[#4a154b]">
+            <div class="w-8 h-8 rounded-lg bg-purple-50 text-[#380036] flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <span class="text-xs font-bold text-slate-900">Imagen PNG</span>
+          </button>
+
+          <!-- Descargar PDF Oficial -->
+          <button id="btn-download-pdf" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-rose-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-rose-300">
+            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <span class="text-xs font-bold text-slate-900">PDF Oficial</span>
+          </button>
+
+          <!-- Enviar a WhatsApp -->
+          <button id="btn-share-whatsapp" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-emerald-50/50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-emerald-300">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"></path>
+              </svg>
+            </div>
+            <span class="text-xs font-bold text-slate-900">WhatsApp</span>
+          </button>
+
+          <!-- Imprimir -->
+          <button id="btn-print-ticket" class="flex flex-col items-center justify-center p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-sm text-slate-800 transition-all group hover:border-slate-400">
+            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+              </svg>
+            </div>
+            <span class="text-xs font-bold text-slate-900">Imprimir</span>
+          </button>
+
+        </div>
+
+        <!-- Botón de compartir nativo / móvil -->
+        <div class="flex items-center justify-center pt-1">
+          <button onclick="QRManager.compartirNativo()" class="w-full py-3 bg-gradient-to-r from-[#200530] via-[#3e0c4b] to-[#581878] hover:from-[#150220] hover:to-[#380036] text-amber-300 font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 border border-amber-400/30">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+            </svg>
+            <span>Compartir Pase / Guardar en el Celular</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Botón para nueva reserva -->
+      <div class="text-center pt-2">
+        <button onclick="App.cambiarPestana('inscripcion')" class="text-xs font-bold text-[#4a154b] hover:underline inline-flex items-center gap-1">
+          <span>← Inscribir a otro médico colegiado</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECCIÓN 3: VALIDACIÓN Y CONTROL EN PUERTA                              -->
+    <!-- ======================================================================= -->
+    <section id="section-validacion" class="app-section hidden space-y-6">
+      
+      <div class="text-center max-w-lg mx-auto">
+        <span class="inline-block px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full mb-2">
+          🔍 Control de Acceso en Puerta
+        </span>
+        <h2 class="text-2xl font-black text-slate-900 font-cinzel">Validación de Boletos QR</h2>
+        <p class="text-xs text-slate-500 mt-1">
+          Escanee el código QR del pase digital o busque manualmente por N° de CMP o DNI.
+        </p>
+      </div>
+
+      <!-- Contenedor del Escáner con Cámara -->
+      <div class="max-w-md mx-auto bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+        
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="text-xs font-bold uppercase tracking-wider">Escáner Óptico QR</span>
+          </div>
+          <span class="text-[11px] text-slate-400">Cámara HD</span>
+        </div>
+
+        <div class="p-4 bg-slate-950">
+          <div class="scanner-container bg-black rounded-xl relative min-h-[260px] flex items-center justify-center">
+            
+            <!-- Video / Lector QR de Html5Qrcode -->
+            <div id="reader" class="w-full h-full"></div>
+
+            <!-- Efectos visuales de escaneo -->
+            <div id="scanner-laser-beam" class="scanner-laser" style="display: none;"></div>
+
+            <div class="scanner-frame">
+              <div class="scanner-corner tl"></div>
+              <div class="scanner-corner tr"></div>
+              <div class="scanner-corner bl"></div>
+              <div class="scanner-corner br"></div>
+            </div>
+
+          </div>
+
+          <p id="scanner-status-text" class="text-center text-xs text-slate-400 mt-3">
+            Presiona 'Activar Cámara' para comenzar el escaneo.
+          </p>
+
+          <div class="mt-3">
+            <button id="btn-toggle-camera" onclick="ScannerService.toggleEscaner()"
+              class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-[#003366] hover:bg-[#001f3f] shadow-md transition-all">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              <span>Activar Cámara</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Búsqueda Manual Alternativa -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200">
+          <span class="text-xs font-bold text-slate-600 block mb-2">Búsqueda Manual (Si no tiene QR):</span>
+          <div class="flex gap-2">
+            <input type="text" id="manual-search-input" placeholder="Ingrese CMP, DNI o ID de Boleto"
+              class="flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            <button id="btn-manual-search"
+              class="px-4 py-2.5 bg-sky-700 hover:bg-sky-800 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow">
+              <span>Validar</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECCIÓN 4: PANEL DE CONTROL & ASISTENCIA (ADMIN)                       -->
+    <!-- ======================================================================= -->
+    <section id="section-admin" class="app-section hidden space-y-6">
+      
+      <!-- Cabecera y botón exportar Excel -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-black text-slate-900 font-cinzel">Panel de Asistencia & Aforo</h2>
+          <p class="text-xs text-slate-500">Monitoreo en tiempo real de registros y validaciones</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-sync-from-sheets" class="px-3.5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs shadow-sm flex items-center gap-1.5 transition-all">
+            <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Sincronizar Sheets</span>
+          </button>
+
+          <button onclick="AdminService.exportarPDF()" id="btn-export-pdf" class="px-4 py-2.5 bg-gradient-to-r from-rose-700 to-rose-900 hover:from-rose-800 hover:to-rose-950 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-all">
+            <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            <span>Exportar Reporte PDF</span>
+          </button>
+
+          <button onclick="AdminService.exportarExcel()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 transition-all">
+            <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Exportar Excel (.xlsx)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Estadísticas KPI -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Inscritos</span>
+          <div id="stat-total-inscritos" class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">0</div>
+          <span class="text-[11px] text-slate-400 mt-1 block">Reservas generadas</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Asistieron / Ingresaron</span>
+          <div id="stat-total-asistieron" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">0</div>
+          <span class="text-[11px] text-emerald-600/70 mt-1 block">Validados en puerta</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Pendientes</span>
+          <div id="stat-total-pendientes" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">0</div>
+          <span class="text-[11px] text-amber-600/70 mt-1 block">Aún por ingresar</span>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <span class="text-xs font-bold uppercase tracking-wider text-[#003366]">% Asistencia</span>
+          <div id="stat-porcentaje-asistencia" class="text-2xl sm:text-3xl font-black text-[#003366] mt-1">0%</div>
+          <span class="text-[11px] text-slate-400 mt-1 block">Porcentaje de concurrencia</span>
+        </div>
+
+      </div>
+
+      <!-- Barra de Aforo -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Capacidad de Aforo del Auditorio</span>
+          <span id="stat-aforo-texto" class="text-xs font-bold text-slate-500">0 / 250 personas</span>
+        </div>
+        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div id="stat-aforo-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Tabla de Asistentes -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <!-- Filtros y Buscador de la Tabla -->
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button data-filter="todos" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#380036] text-amber-300 shadow-sm transition-all">
+              Todos
+            </button>
+            <button data-filter="asistieron" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all">
+              Ingresaron
+            </button>
+            <button data-filter="pendientes" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 transition-all">
+              Pendientes
+            </button>
+            <button data-filter="voucher-pendiente" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition-all">
+              🟡 Validar Vouchers
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="relative w-full sm:w-64">
+              <input type="text" id="admin-search-input" placeholder="Buscar por Nombre, CMP, DNI, Operación..."
+                class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium">
+              <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <span id="admin-table-count" class="text-xs font-bold text-slate-400 whitespace-nowrap bg-slate-200 px-2 py-1 rounded-md">
+              0 registros
+            </span>
+          </div>
+        </div>
+
+        <!-- Contenedor Scrollable de la Tabla -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">ID / Fecha</th>
+                <th class="py-3 px-4">Médico Asistente</th>
+                <th class="py-3 px-4">CMP / DNI</th>
+                <th class="py-3 px-4">Contacto</th>
+                <th class="py-3 px-4 text-center">Acomp.</th>
+                <th class="py-3 px-4 text-center">Abono / Voucher</th>
+                <th class="py-3 px-4 text-center">Asistencia</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body" class="divide-y divide-slate-100">
+              <!-- Renderizado dinámico vía AdminService.renderizarTabla() -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECCIÓN 5: CONFIGURACIÓN & VINCULACIÓN GOOGLE DRIVE / SHEETS            -->
+    <!-- ======================================================================= -->
+    <section id="section-configuracion" class="app-section hidden space-y-6">
+      
+      <div class="text-center max-w-lg mx-auto">
+        <span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-bold rounded-full mb-2">
+          ⚙️ Ajustes del Sistema
+        </span>
+        <h2 class="text-2xl font-black text-slate-900 font-cinzel">Configuración & Google Drive</h2>
+        <p class="text-xs text-slate-500 mt-1">
+          Vincule su hoja de Google Sheets en Google Drive y configure los parámetros del evento.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Formulario de Configuración -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+            <h3 class="text-base font-bold text-slate-900">Conexión con Google Sheets / Google Drive</h3>
+            <div id="sheets-status-badge"></div>
+          </div>
+
+          <form id="form-configuracion" class="space-y-5">
+            <div>
+              <label for="config-sheets-url" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                URL de la Aplicación Web de Google Apps Script
+              </label>
+              <input type="url" id="config-sheets-url" placeholder="https://script.google.com/macros/s/.../exec"
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-sky-500 text-xs font-mono text-slate-800 transition-all">
+              <p class="text-[11px] text-slate-400 mt-1.5">
+                Obtenga esta URL siguiendo las instrucciones del archivo <span class="font-mono font-bold text-sky-700">INSTRUCCIONES_GOOGLE_DRIVE.md</span> en la carpeta del proyecto.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button type="button" id="btn-copy-apps-script"
+                class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                </svg>
+                <span>📋 Copiar Código Apps Script Completo (391 líneas)</span>
+              </button>
+
+              <button type="button" id="btn-test-sheets"
+                class="px-4 py-2.5 bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span>Probar Conexión</span>
+              </button>
+            </div>
+
+            <hr class="border-slate-100 my-4">
+
+            <h4 class="text-sm font-bold text-slate-900 mb-3">Identidad Visual & Logotipo Oficial</h4>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
+              <div class="w-16 h-16 rounded-xl bg-white p-1 border-2 border-amber-400 shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden">
+                <img id="preview-logo-img" src="assets/logo.png" alt="Preview Logo" class="w-full h-full object-contain">
+              </div>
+              <div class="flex-1 w-full space-y-2">
+                <div>
+                  <label for="config-logo-url" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    URL o Enlace del Logotipo
+                  </label>
+                  <input type="text" id="config-logo-url" placeholder="assets/logo.png o enlace de imagen"
+                    class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800">
+                </div>
+                <div class="flex items-center gap-2">
+                  <label class="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 rounded-lg text-xs font-bold cursor-pointer transition-all">
+                    <span>Subir Imagen Local / Facebook</span>
+                    <input type="file" id="config-logo-file" accept="image/*" class="hidden">
+                  </label>
+                  <button type="button" id="btn-reset-logo" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Restablecer logo por defecto
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <hr class="border-slate-100 my-4">
+
+            <h4 class="text-sm font-bold text-slate-900 mb-3">Parámetros del Evento</h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="config-evento-nombre" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Nombre del Evento
+                </label>
+                <input type="text" id="config-evento-nombre"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800">
+              </div>
+
+              <div>
+                <label for="config-evento-fecha" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Fecha y Hora
+                </label>
+                <input type="text" id="config-evento-fecha"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800">
+              </div>
+
+              <div>
+                <label for="config-evento-lugar" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Lugar / Auditorio
+                </label>
+                <input type="text" id="config-evento-lugar"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800">
+              </div>
+
+              <div>
+                <label for="config-evento-aforo" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Capacidad de Aforo Máximo
+                </label>
+                <input type="number" id="config-evento-aforo"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800">
+              </div>
+            </div>
+
+            <hr class="border-slate-100 my-4">
+
+            <h4 class="text-sm font-bold text-slate-900 mb-2">Seguridad & Credenciales de Acceso</h4>
+            <p class="text-xs text-slate-500 mb-3">Establezca el usuario y contraseña para proteger los módulos administrativos.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+              <div>
+                <label for="config-auth-user" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Usuario Administrador
+                </label>
+                <input type="text" id="config-auth-user" placeholder="admin"
+                  class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800">
+              </div>
+
+              <div>
+                <label for="config-auth-pass" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Nueva Contraseña (Opcional)
+                </label>
+                <input type="password" id="config-auth-pass" placeholder="Dejar en blanco para no cambiar"
+                  class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800">
+              </div>
+            </div>
+
+            <h4 class="text-sm font-bold text-slate-900 mb-2">Padrón Oficial de Agremiados (Acceso Exclusivo)</h4>
+            <p class="text-xs text-slate-500 mb-3">Solo los médicos colegiados registrados en este padrón pueden ingresar a reservar.</p>
+            
+            <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-200 space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center text-lg font-black border border-purple-200">
+                    📋
+                  </div>
+                  <div>
+                    <span id="padron-total-count" class="font-black text-xs text-[#200530] block">380 Colegiados Activos en Pasco</span>
+                    <span class="text-[10px] text-purple-800 font-medium">Fuente: AGREMIADOS PASCO.xlsx</span>
+                  </div>
+                </div>
+                
+                <button type="button" onclick="App.abrirModalPadron()" class="px-3.5 py-2 bg-white border border-purple-300 hover:bg-purple-100 text-purple-900 font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span>Explorar Padrón</span>
+                </button>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-100">
+                <label class="px-3 py-1.5 bg-[#4a154b] hover:bg-[#380036] text-amber-300 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm border border-amber-400/30">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                  </svg>
+                  <span>Actualizar desde otro Excel (.xlsx)</span>
+                  <input type="file" id="config-padron-excel-file" accept=".xlsx, .xls" class="hidden">
+                </label>
+
+                <button type="button" onclick="App.restablecerPadronOriginal()" class="text-xs text-purple-800 hover:text-purple-950 underline">
+                  Restablecer padrón original
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-4">
+              <button type="submit"
+                class="w-full py-3.5 bg-gradient-to-r from-[#200530] via-[#4a154b] to-[#6b21a8] hover:from-[#150220] hover:to-[#3b0d42] text-amber-300 font-extrabold rounded-xl shadow-lg transition-all text-xs border border-amber-400/30">
+                Guardar Configuración y Credenciales
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Guía Rápida Lateral -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-2 text-[#003366]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h4 class="font-extrabold text-sm">Pasos para Google Drive</h4>
+          </div>
+
+          <ol class="text-xs text-slate-600 space-y-3 list-decimal list-inside leading-relaxed">
+            <li>Crea una nueva hoja en <strong>Google Sheets</strong> en tu Google Drive.</li>
+            <li>Ve a <strong>Extensiones → Apps Script</strong>.</li>
+            <li>Copia y pega el código del archivo <code class="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">CodigoAppsScript.gs</code>.</li>
+            <li>Haz clic en <strong>Implementar → Nueva implementación → Aplicación web</strong>.</li>
+            <li>Elige acceso: <strong>"Cualquier persona"</strong>.</li>
+            <li>Copia la URL generada y pégala en esta pantalla.</li>
+          </ol>
+
+          <div class="pt-2">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-[11px] text-blue-900 leading-snug">
+              💡 <strong>Nota:</strong> Si no configuras la URL de Google Sheets, la aplicación seguirá funcionando de manera local guardando todo en este navegador.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL DE RESULTADO DE VALIDACIÓN (FLOTANTE)                               -->
+  <!-- ========================================================================= -->
+  <div id="validation-result-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+    <div id="validation-result-content" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-scaleUp">
+      <!-- Rellenado dinámico por ScannerService.mostrarResultadoModal() -->
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL DE AUTENTICACIÓN / ACCESO RESTRINGIDO (USUARIO Y CONTRASEÑA)        -->
+  <!-- ========================================================================= -->
+  <div id="modal-auth-login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border-2 border-[#dfb76c] transform transition-all animate-scaleUp">
+      
+      <!-- Cabecera Morado Obispo -->
+      <div class="bg-gradient-to-r from-[#200530] via-[#380036] to-[#54146e] p-5 text-center text-white relative">
+        <button type="button" onclick="App.cerrarModalAuth()" class="absolute top-3 right-3 text-white/70 hover:text-white p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+
+        <div class="w-16 h-16 bg-white rounded-2xl p-1.5 mx-auto mb-2.5 shadow-lg border-2 border-amber-400 flex items-center justify-center">
+          <img src="assets/logo.png" alt="Logo CMP" class="w-full h-full object-contain">
+        </div>
+
+        <span class="inline-block px-3 py-0.5 text-[9.5px] font-black uppercase tracking-wider rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 mb-1">
+          🔒 Acceso Protegido
+        </span>
+
+        <h3 id="auth-modal-title" class="text-base font-extrabold font-cinzel text-white leading-tight">
+          Panel Administrativo
+        </h3>
+        <p id="auth-modal-subtitle" class="text-[11px] text-purple-200 mt-0.5">
+          Ingrese sus credenciales de directivo / staff
+        </p>
+      </div>
+
+      <!-- Formulario de Login -->
+      <form id="form-auth-login" class="p-6 space-y-4">
+        
+        <div id="auth-error-message" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl text-center"></div>
+
+        <div>
+          <label for="auth-input-user" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Usuario
+          </label>
+          <div class="relative">
+            <input type="text" id="auth-input-user" required placeholder="admin" autocomplete="username"
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b]">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label for="auth-input-pass" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            Contraseña
+          </label>
+          <div class="relative">
+            <input type="password" id="auth-input-pass" required placeholder="••••••••" autocomplete="current-password"
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-[#4a154b] focus:border-[#4a154b]">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3 bg-gradient-to-r from-[#200530] via-[#380036] to-[#54146e] hover:from-[#150220] hover:to-[#380036] text-amber-300 font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 border border-amber-400/30">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+          <span>Iniciar Sesión & Ingresar</span>
+        </button>
+
+        <p class="text-[10px] text-slate-400 text-center font-medium pt-1">
+          Acceso protegido para Directiva, Staff y Médicos Colegiados
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL PARA EXPLORAR EL PADRÓN OFICIAL DE AGREMIADOS (380 COLEGIADOS)     -->
+  <!-- ========================================================================= -->
+  <div id="modal-ver-padron" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border-2 border-[#dfb76c] animate-scaleUp">
+      
+      <!-- Cabecera del Modal -->
+      <div class="bg-gradient-to-r from-[#200530] via-[#380036] to-[#54146e] p-4 px-6 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white rounded-xl p-1 shadow flex items-center justify-center border border-amber-400">
+            <img src="assets/logo.png" alt="Logo CMP" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm font-cinzel text-white leading-tight">Padrón Oficial de Colegiados Pasco</h3>
+            <p id="modal-padron-subtitle" class="text-[11px] text-purple-200">380 médicos habilitados para reserva</p>
+          </div>
+        </div>
+
+        <button type="button" onclick="App.cerrarModalPadron()" class="text-white/70 hover:text-white p-1 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Buscador de Colegiados -->
+      <div class="p-4 bg-purple-50/50 border-b border-purple-100 flex gap-2">
+        <div class="relative flex-1">
+          <input type="text" id="modal-padron-search" placeholder="Buscar por CMP o Nombres del médico..."
+            class="w-full pl-9 pr-4 py-2 bg-white border border-purple-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4a154b]">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-purple-900/50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Colegiados con Scroll -->
+      <div class="flex-1 overflow-y-auto p-4 divide-y divide-slate-100" id="modal-padron-list">
+        <!-- Rellenado dinámico por App.renderizarListaPadron() -->
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <span id="modal-padron-count-badge">Mostrando 380 médicos</span>
+        <button type="button" onclick="App.cerrarModalPadron()" class="px-4 py-1.5 bg-[#4a154b] hover:bg-[#380036] text-amber-300 font-bold rounded-lg transition-all text-xs">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL PARA VER Y VALIDAR VOUCHER DE PAGO (ADMIN)                          -->
+  <!-- ========================================================================= -->
+  <div id="modal-ver-voucher" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden border-2 border-[#dfb76c] animate-scaleUp">
+      
+      <!-- Cabecera -->
+      <div class="bg-gradient-to-r from-[#200530] via-[#380036] to-[#54146e] p-4 px-6 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🧾</span>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base font-cinzel text-white leading-tight">Comprobante de Pago</h3>
+            <p id="modal-voucher-subtitle" class="text-[11px] text-amber-300">Detalles del abono por acompañantes</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-descargar-voucher-header" onclick="AdminService.descargarVoucher()" title="Descargar Voucher" class="p-1.5 px-3 bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white rounded-lg transition-all hidden flex items-center gap-1.5 text-xs font-bold border border-white/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>Descargar</span>
+          </button>
+          <button type="button" onclick="AdminService.cerrarModalVoucher()" class="text-white/70 hover:text-white p-1 rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido del Voucher -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4">
+        <div class="bg-purple-50/70 p-3.5 rounded-xl border border-purple-100 space-y-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="flex justify-between sm:flex-col sm:justify-start">
+              <span class="text-slate-500 font-semibold text-[11px]">Médico Titular:</span>
+              <span id="modal-voucher-medico" class="font-black text-slate-900 text-xs">--</span>
+            </div>
+            <div class="flex justify-between sm:flex-col sm:justify-start">
+              <span class="text-slate-500 font-semibold text-[11px]">N° CMP:</span>
+              <span id="modal-voucher-cmp" class="font-bold text-purple-900 text-xs">--</span>
+            </div>
+            <div class="flex justify-between sm:flex-col sm:justify-start">
+              <span class="text-slate-500 font-semibold text-[11px]">Acompañantes:</span>
+              <span id="modal-voucher-acomp" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="flex justify-between sm:flex-col sm:justify-start">
+              <span class="text-slate-500 font-semibold text-[11px]">Medio de Pago:</span>
+              <span id="modal-voucher-medio" class="font-bold text-slate-800 text-xs">--</span>
+            </div>
+            <div class="flex justify-between items-center sm:flex-col sm:items-start">
+              <span class="text-slate-500 font-semibold text-[11px]">N° de Operación:</span>
+              <span id="modal-voucher-operacion" class="font-mono font-black text-purple-950 bg-white px-2 py-0.5 rounded border border-purple-200 text-xs">--</span>
+            </div>
+            <div class="flex justify-between items-center sm:flex-col sm:items-start">
+              <span class="text-slate-700 font-bold text-[11px]">Monto Total:</span>
+              <span id="modal-voucher-monto" class="text-sm sm:text-base font-black text-[#065f46]">S/ 0.00</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-purple-200">
+            <span class="text-slate-700 font-bold">Estado del Pago:</span>
+            <span id="modal-voucher-estado-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-black">--</span>
+          </div>
+        </div>
+
+        <!-- Imagen del Voucher con Vista Previa Ampliada y Botón Descargar -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Captura del Voucher:</span>
+            <div id="modal-voucher-actions-bar" class="flex flex-wrap items-center gap-2 hidden">
+              <a id="btn-ver-voucher-drive" href="#" target="_blank" rel="noopener noreferrer" class="hidden text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+                <span>🌐 Ver en Drive</span>
+              </a>
+              <label class="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold px-2.5 py-1 rounded-lg border border-amber-300 flex items-center gap-1 transition-all cursor-pointer shadow-2xs">
+                <span>🔄 Cambiar</span>
+                <input type="file" accept="image/*" class="hidden" onchange="AdminService.subirVoucherDesdeModal(event)">
+              </label>
+              <button type="button" onclick="AdminService.abrirLightboxVoucher()" class="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-900 font-bold px-2.5 py-1 rounded-lg border border-purple-200 flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                </svg>
+                <span>🔍 Pantalla Completa</span>
+              </button>
+              <button type="button" onclick="AdminService.descargarVoucher()" class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span>📥 Descargar</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="modal-voucher-img-container" class="relative rounded-2xl border-2 border-dashed border-slate-300 overflow-hidden bg-slate-900/5 flex items-center justify-center min-h-[260px] max-h-[520px] p-2 group shadow-inner transition-all">
+            <img id="modal-voucher-img" src="" alt="Voucher" referrerpolicy="no-referrer" onclick="AdminService.abrirLightboxVoucher()" title="Haz clic para ver en pantalla completa" class="hidden max-h-[500px] w-auto max-w-full object-contain rounded-xl cursor-zoom-in transition-all duration-200 group-hover:scale-[1.01] shadow-sm">
+            <div id="modal-voucher-zoom-hint" class="hidden absolute bottom-3 right-3 bg-black/70 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-sm pointer-events-none flex items-center gap-1">
+              <span>🔍 Clic para ampliar</span>
+            </div>
+            
+            <!-- Estado de error si la imagen no carga -->
+            <div id="modal-voucher-img-error" class="hidden py-8 px-4 text-center text-slate-700 text-xs space-y-3">
+              <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-2xl">⚠️</div>
+              <p class="font-bold text-slate-800">No se pudo cargar la vista previa directa de la imagen.</p>
+              <p class="text-[11px] text-slate-500 max-w-sm mx-auto">Esto ocurre si el enlace de Google Drive requiere permisos o si la conexión fue bloqueada por el navegador.</p>
+              <div class="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                <a id="btn-fallback-drive-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs text-xs transition-all">
+                  <span>🌐 Abrir en Google Drive</span>
+                </a>
+                <label class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-purple-100 hover:bg-purple-200 text-purple-950 font-bold rounded-xl cursor-pointer transition-all border border-purple-300 shadow-2xs text-xs">
+                  <span>📸 Cargar Imagen Local</span>
+                  <input type="file" accept="image/*" class="hidden" onchange="AdminService.subirVoucherDesdeModal(event)">
+                </label>
+              </div>
+            </div>
+
+            <!-- Estado sin imagen -->
+            <div id="modal-voucher-no-img" class="py-8 px-4 text-center text-slate-500 text-xs space-y-3">
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-2xl text-slate-400">📷</div>
+              <p class="font-medium text-slate-600">El asistente aún no adjuntó la captura del comprobante.</p>
+              <p class="text-[11px] text-slate-400">Puedes adjuntar un archivo, arrastrar una imagen aquí o pegar una captura con <kbd class="px-1.5 py-0.5 bg-slate-200 rounded font-mono text-[10px] text-slate-700">Ctrl+V</kbd></p>
+              <label class="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-950 font-bold rounded-xl cursor-pointer transition-all border border-purple-300 shadow-2xs">
+                <span>📸 Adjuntar Voucher Ahora</span>
+                <input type="file" id="modal-admin-upload-voucher" accept="image/*" class="hidden" onchange="AdminService.subirVoucherDesdeModal(event)">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie del Modal con Acciones -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <button type="button" onclick="AdminService.cerrarModalVoucher()" class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition-all">
+          Cerrar
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-descargar-voucher-footer" onclick="AdminService.descargarVoucher()" class="px-4 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>Descargar Voucher</span>
+          </button>
+
+          <button type="button" id="btn-aprobar-voucher-modal" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span id="modal-voucher-btn-text">Aprobar Pago</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL LIGHTBOX / FULLSCREEN PARA VER VOUCHER EN TAMAÑO MÁXIMO             -->
+  <!-- ========================================================================= -->
+  <div id="modal-lightbox-voucher" style="z-index: 99999; display: none;" class="fixed inset-0 flex flex-col items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-lg animate-fadeIn" onclick="if (event.target === this) AdminService.cerrarLightboxVoucher()">
+    
+    <!-- Barra superior del Lightbox -->
+    <div class="w-full max-w-5xl flex items-center justify-between p-3 text-white">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📸</span>
+        <span id="lightbox-voucher-title" class="font-bold text-xs sm:text-sm text-amber-300 truncate max-w-[250px] sm:max-w-md">Voucher en Alta Resolución</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="AdminService.descargarVoucher()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>Descargar</span>
+        </button>
+        <button type="button" onclick="AdminService.cerrarLightboxVoucher()" class="p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-all cursor-pointer" title="Cerrar (Esc)">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Imagen en Pantalla Completa -->
+    <div class="flex-1 flex items-center justify-center p-2 max-w-5xl max-h-[85vh] w-full overflow-auto cursor-pointer" onclick="if (event.target === this) AdminService.cerrarLightboxVoucher()">
+      <img id="lightbox-voucher-img" src="" alt="Voucher Fullscreen" referrerpolicy="no-referrer" class="max-h-[80vh] max-w-full w-auto object-contain rounded-2xl shadow-2xl border-2 border-white/20">
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- BARRA DE NAVEGACIÓN INFERIOR PARA MÓVILES (BOTTOM NAV)                    -->
+  <!-- ========================================================================= -->
+  <nav class="md:hidden mobile-nav-bar flex items-center justify-around py-2 px-1 border-t border-slate-200 shadow-lg">
+    
+    <button data-tab-target="inscripcion" class="mobile-nav-btn flex flex-col items-center justify-center py-1 px-2 text-[#4a154b] font-extrabold">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+      </svg>
+      <span class="text-[10px] mt-0.5">Inscripción</span>
+    </button>
+
+    <button data-tab-target="boleto" class="mobile-nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+      </svg>
+      <span class="text-[10px] mt-0.5">Mi Boleto</span>
+    </button>
+
+    <button data-tab-target="validacion" class="mobile-nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400">
+      <div class="w-6 h-6 rounded-full bg-[#dfb76c] text-[#200530] flex items-center justify-center shadow-xs">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+        </svg>
+      </div>
+      <span class="text-[10px] mt-0.5">Validar QR</span>
+    </button>
+
+    <button data-tab-target="admin" class="mobile-nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      <span class="text-[10px] mt-0.5">Asistencia</span>
+    </button>
+
+    <button data-tab-target="configuracion" class="mobile-nav-btn flex flex-col items-center justify-center py-1 px-2 text-slate-400">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+      </svg>
+      <span class="text-[10px] mt-0.5">Ajustes</span>
+    </button>
+
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL PARA VER QR DE YAPE EN PANTALLA COMPLETA                            -->
+  <!-- ========================================================================= -->
+  <div id="modal-qr-expandido" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden" onclick="this.classList.add('hidden')">
+    <div class="bg-white p-4 rounded-2xl shadow-2xl max-w-xs w-full text-center border-2 border-[#dfb76c] animate-scaleUp" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-2 mb-2 border-b border-purple-100">
+        <span class="text-xs font-black text-[#200530] flex items-center gap-1.5">
+          📱 QR Oficial de Yape
+        </span>
+        <button type="button" onclick="document.getElementById('modal-qr-expandido').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 font-bold text-base p-1">
+          ✕
+        </button>
+      </div>
+      <img id="modal-qr-img" src="assets/yape_qr.png" alt="QR Yape Oficial" class="w-full h-auto rounded-xl shadow-inner border border-purple-100 mb-2.5">
+      <p class="text-xs font-black text-[#200530] leading-tight">Evelyn Corina Castaneda Chamorro</p>
+      <p class="font-mono text-xs font-bold text-purple-900 mt-0.5">915 059 045</p>
+      <button type="button" onclick="navigator.clipboard.writeText('915059045'); App.showToast('¡Número copiado!', 'success')" class="mt-2 w-full py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-900 font-extrabold text-xs rounded-lg border border-purple-200 transition-all">
+        📋 Copiar Número
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- SCRIPTS DE LA APLICACIÓN CON CACHE BUSTING -->
+  <script src="js/config.js?v=5.0"></script>
+  <script src="js/padronAgremiados.js?v=5.0"></script>
+  <script src="js/padronService.js?v=5.0"></script>
+  <script src="js/storage.js?v=5.0"></script>
+  <script src="js/auth.js?v=5.0"></script>
+  <script src="js/sheetsService.js?v=5.0"></script>
+  <script src="js/qrManager.js?v=5.0"></script>
+  <script src="js/scanner.js?v=5.0"></script>
+  <script src="js/registro.js?v=5.0"></script>
+  <script src="js/admin.js?v=5.0"></script>
+  <script src="js/app.js?v=5.0"></script>
+
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual Oficial de Instrucciones - CMP Pasco</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm 15mm 15mm 15mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 11.5px;
+      margin: 0;
+      padding: 20px 25px;
+    }
+    h1, h2, h3, h4 {
+      color: #200530;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 20px; font-weight: 900; }
+    h2 { 
+      font-size: 14px; 
+      font-weight: 800; 
+      border-bottom: 2px solid #dfb76c; 
+      padding-bottom: 4px; 
+      margin-top: 24px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    h3 { font-size: 12.5px; font-weight: 700; color: #3b0764; }
+    p { margin: 6px 0; }
+    .header-box {
+      background: linear-gradient(135deg, #200530 0%, #3b0764 60%, #4a044e 100%);
+      border-radius: 12px;
+      padding: 18px 22px;
+      color: #ffffff;
+      border: 2px solid #dfb76c;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .badge {
+      background: #dfb76c;
+      color: #200530;
+      font-size: 10.5px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 5px;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 10.5px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #200530;
+      color: #dfb76c;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #7e22ce;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 10px 0;
+    }
+    .alert-green {
+      background: #ecfdf5;
+      border-left: 4px solid #059669;
+      color: #065f46;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+    .alert-amber {
+      background: #fffbeb;
+      border-left: 4px solid #d97706;
+      color: #92400e;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+    .code-block {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 10px;
+      overflow-x: auto;
+      margin: 8px 0;
+      border-left: 4px solid #dfb76c;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .avoid-break {
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENCABEZADO INSTITUCIONAL -->
+  <div class="header-box">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div style="width: 68px; height: 68px; background: #ffffff; border-radius: 12px; padding: 4px; display: flex; align-items: center; justify-content: center; border: 2px solid #dfb76c; flex-shrink: 0;">
+        <img src="data:image/png;base64,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8888888888888o88888888888www48888888888o888888888AwYyY5Y888888888o888888882qAiCyga608888888o88888888wAKqBBADzU8888888o8888888io/WCBCQ/QO8888888o8888888gorDDBCDvAl8888888o8888888I80wjBQwygo8888888o8888888KoiBBBBBC4o8888888o88888888gwBBBBBQ828888888o88888888IEoGCCEmIc8888888o888888888Ip8Z0V8888888888o88888888AwsUDOQQ088888888o88888888d5HxP9RpF88888888o888888pgMQEVcwd81E0888888o888888EVxvB6oAZ8bAs888888o8888888sB1RY3MpMh48888888o88888888Dt8FhBBS/+8888888o888888swYc4kYwYow8AU88888o88888s88MsMcMc8MMc8888888o8888888888888888888888888o8888888888888888888888888o8888888888888888888888888owwwwwwwwwwwwwwwwwwwwwwwwwg/9oACAEDAQE/EP5YxWEaNxDVpUTonglFDQnJVqamIgBSEANABVSiBqcAQBjygGPRAVD1CUooR5TFoxQqGooxeYxKTUOpQEoKPkRUUDUQZALa8xiZVDURABRmPKwCgJU9RkogDQAA6TYa0CFPUypKdTSYEqpkUIlAXMUOQkiEAMFS4tSS0K5QtVNWSVaEmTWwqWonYISpgwqoNdGPBeAD08HyWUyoJPh9BgKB56IwqFCjqCzl0ZlEUdaOiGVg6BMYL4glBFI1F+ARoYqgJokRGtgoBF6K1cBqV0IuJJWkLpWdGqlUpRHgAvyJ1WWiWjaf0M//2gAIAQIBAT8Q/lsCTVgxqqIrVTQt1Q0aJUp6mCjQPVYTKLFtBTEqBqdtD0MjIhFJagD8sTMJ6ZerI1PaMYukT1aMjx2l5oCpNQuuIGOoIDyOYcfSaLBYmqMLpiVQHRYcfWPYQI1I0S0w+Up9DaVjkDUigGjYmmKRolIQhP0ZlkDU+AaQwDgQD0hGlbKFOpyYFKYSQMafMCkSpAwiWLUpeSPcklqSKRChkmRVRiuSYHBZExJSkCOilocAFHngFJ0JkqroQqHk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" alt="Logo CMP" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+      </div>
+      <div>
+        <div style="color: #dfb76c; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">Colegio Médico del Perú</div>
+        <div style="color: #ffffff; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">CONSEJO REGIONAL XX PASCO</div>
+        <div style="margin-top: 4px;">
+          <span class="badge">Manual Oficial de Operaciones & Administración</span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: right; background: rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(223, 183, 108, 0.4);">
+      <div style="font-size: 9.5px; color: #e9d5ff; text-transform: uppercase; font-weight: 700;">Versión del Sistema</div>
+      <div style="font-size: 12px; font-weight: 800; color: #fef08a;">v3.5 Professional</div>
+      <div style="font-size: 9px; color: #cbd5e1; margin-top: 3px;">Aforo Máximo: 350 Pers.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>📍 Datos Oficiales del Evento:</strong> Fiesta de Gala por el Día de la Medicina Peruana 2026<br>
+    <strong>📅 Fecha & Hora:</strong> Miércoles, 07 de Octubre de 2026 a las 07:00 p. m.<br>
+    <strong>🏛️ Lugar:</strong> Centro de Convenciones LA KATEDRAL (Pasco, Perú) • <strong>🎶 Artistas:</strong> Los Dávila (K'jantu) & Orquesta La Penca
+  </div>
+
+  <h2>1. Visión General y Arquitectura del Sistema</h2>
+  <p>El sistema gestiona de extremo a extremo el registro de médicos colegiados, la recaudación segura por acompañantes (S/ 20.00 c/u) con validación de comprobantes en Google Drive, y el control de accesos en portería mediante <strong>Códigos QR Duales e Independientes</strong> con operatividad <strong>Offline-First</strong>.</p>
+
+  <div class="code-block">
+[ MÉDICO ] ➔ Ingresa CMP ➔ Valida Padrón (380 médicos Pasco) ➔ Elige Entrada (Titular Gratis / Acomp. S/ 20)
+                                                                            │
+      ┌─────────────────────────────────────────────────────────────────────┘
+      ▼
+[ Pase Titular ] ➔ QR Habilitado de Inmediato ✅
+[ Pase Acomp.  ] ➔ Sube Voucher (Yape al 915 059 045) ➔ Admin Aprueba en Panel ➔ QR Habilitado (-ACOMP1) ✅
+                                                                            │
+      ┌─────────────────────────────────────────────────────────────────────┘
+      ▼
+[ PORTERÍA ] ➔ Escaneo con Cámara / Lector ➔ Valida Independiente (Titular y Acompañante a distintas horas)
+  </div>
+
+  <h2>2. Módulo de Inscripción y Validación de Agremiados</h2>
+  <h3>2.1. Consulta en Vivo contra el Padrón Oficial</h3>
+  <p>El médico ingresa su número de CMP. El sistema realiza la validación inmediata:</p>
+  <ul>
+    <li><strong>Colegiado Habilitado de Pasco:</strong> Se autocompletan los nombres y especialidad oficial del médico, desbloqueando el formulario.</li>
+    <li><strong>Colegiado de otra región / No registrado:</strong> Se emite una alerta restrictiva indicando que el registro es exclusivo para el Consejo Regional XX Pasco.</li>
+    <li><strong>Control Antiduplicados:</strong> Si el CMP ya cuenta con una inscripción activa, el formulario se bloquea y se muestra el botón <code>🎟️ Ver mi Boleto Actual</code> para evitar duplicidad de pases.</li>
+  </ul>
+
+  <h3>2.2. Modalidades de Entrada</h3>
+  <ul>
+    <li><strong>Médico Titular:</strong> Pase <strong>100% Gratuito</strong> de manera automática.</li>
+    <li><strong>Médico + 1 Acompañante:</strong> Tarifa oficial de <strong>S/ 20.00 PEN</strong>.
+      <ul>
+        <li>Medio de Pago: Yape o Transferencia al número <strong><code>915 059 045</code></strong> (Colegio Médico del Perú - Pasco).</li>
+        <li>El colegiado adjunta el N° de Operación Bancaria y la captura del comprobante (voucher).</li>
+      </ul>
+    </li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <h2>3. Módulo «Mi Boleto Digital» (Pases Duales)</h2>
+  <p>El sistema genera dos pases con códigos QR completamente diferenciados e independientes:</p>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo de Pase</th>
+        <th>Estructura del Código QR</th>
+        <th>Condición de Activación</th>
+        <th>Horario de Ingreso</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Pase Titular</strong></td>
+        <td><code>CMP-20261007-XXXX-CMP</code></td>
+        <td>Inmediata tras el registro (Gratuito)</td>
+        <td>Cualquier hora desde las 7:00 PM</td>
+      </tr>
+      <tr>
+        <td><strong>Pase Acompañante</strong></td>
+        <td><code>CMP-20261007-XXXX-ACOMP1</code></td>
+        <td>Tras aprobación del pago de S/ 20.00 por el Administrador</td>
+        <td>Independiente (Puede ingresar antes o después del médico)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Opciones de Descarga y Envío:</h3>
+  <ul>
+    <li><strong>Descargar PNG:</strong> Imagen de alta definición lista para guardar en la galería del smartphone.</li>
+    <li><strong>Descargar PDF:</strong> Formato formal A4 listo para imprimir.</li>
+    <li><strong>Compartir por WhatsApp:</strong> Envía el pase con mensaje institucional formateado.</li>
+    <li><strong>Recuperador por CMP:</strong> Permite buscar y recuperar el boleto digital en cualquier momento.</li>
+  </ul>
+
+  <h2>4. Módulo de Escáner y Control en Puerta (Validación QR)</h2>
+  <p>Funciona en cualquier smartphone, tablet o laptop con cámara web, así como pistolas lectoras 2D.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Estado Visual</th>
+        <th>Diagnóstico</th>
+        <th>Acción del Operador en Portería</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span style="color:#059669; font-weight:800;">🟢 INGRESO AUTORIZADO</span></td>
+        <td>Boleto válido y sin registrar previamente.</td>
+        <td><strong>Permitir ingreso.</strong> Registra automáticamente hora y operador.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#d97706; font-weight:800;">🟡 YA VALIDADO</span></td>
+        <td>El pase ya fue escaneado anteriormente.</td>
+        <td><strong>Revisar.</strong> Muestra en pantalla la hora exacta del primer ingreso.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#dc2626; font-weight:800;">🔴 PAGO PENDIENTE</span></td>
+        <td>Pase de acompañante cuyo pago de S/ 20.00 no ha sido aprobado.</td>
+        <td><strong>Denegar acceso.</strong> Derivar a Tesorería para verificar el voucher.</td>
+      </tr>
+      <tr>
+        <td><span style="color:#64748b; font-weight:800;">⚪ NO ENCONTRADO</span></td>
+        <td>Código QR alterado o inexistente.</td>
+        <td><strong>Denegar acceso.</strong> Pase no reconocido en la base de datos.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <h2>5. Panel de Administración, Aforo y Vouchers</h2>
+  <p>Acceso seguro para la directiva: Usuario <code>admin</code> / Contraseña <code>cmp2026</code>.</p>
+
+  <h3>5.1. Métricas e Indicadores en Tiempo Real</h3>
+  <ul>
+    <li><strong>Total Inscritos:</strong> Suma global de médicos registrados.</li>
+    <li><strong>Asistieron / Ingresaron:</strong> Conteo desglosado de médicos titulares y acompañantes que ingresaron.</li>
+    <li><strong>Ocupación de Sala:</strong> Termómetro visual de aforo respecto al límite de 350 personas.</li>
+    <li><strong>Recaudación Total:</strong> Monto total recaudado por concepto de acompañantes (S/ 20.00 c/u).</li>
+  </ul>
+
+  <h3>5.2. Herramientas de Gestión</h3>
+  <ul>
+    <li><strong>Validación de Vouchers:</strong> Clic en <code>👁️ Ver Voucher</code> para inspeccionar la captura de pago a pantalla completa y <code>✓ Aprobar</code> para liberar el QR del acompañante al instante.</li>
+    <li><strong>Envío Directo de QR por WhatsApp (💬):</strong> Envía el pase al WhatsApp del médico en 1 clic.</li>
+    <li><strong>Eliminación Sincronizada (🗑️):</strong> Borra la reserva del aplicativo y simultáneamente de la hoja de <strong>Google Sheets</strong>.</li>
+    <li><strong>Exportar Reporte PDF Oficial (📄):</strong> Descarga el informe ejecutivo con gráficos vectoriales y casilleros de firmas.</li>
+    <li><strong>Exportar Excel Oficial (.xlsx):</strong> Descarga la base completa con 22 columnas de auditoría.</li>
+  </ul>
+
+  <h2>6. Backend en Google Apps Script, Sheets y Drive</h2>
+  <div class="card">
+    <strong>🔗 URL de la API Activa (Apps Script):</strong><br>
+    <code style="word-break: break-all;">https://script.google.com/macros/s/AKfycbxR2dFErigvIcquLoAUZF4WhY2TUs6AJqFReXAKKvTIckBdfTSB1s1O_PrmtChnF8wI/exec</code><br><br>
+    <strong>📁 Almacenamiento en Google Drive:</strong> Todos los comprobantes se guardan de forma automática en la carpeta <code>Vouchers Evento CMP Pasco 2026</code>, registrando su enlace directo en la hoja de cálculo.
+  </div>
+
+  <h2>7. Protocolos de Contingencia</h2>
+  <div class="alert-green">
+    <strong>📶 Si se corta el Internet en la Puerta del Evento:</strong> El sistema funciona al 100% de manera <em>Offline-First</em> almacenando los ingresos localmente. Al volver la conexión, presionar <strong>«Sincronizar Sheets»</strong>.
+  </div>
+  <div class="alert-amber">
+    <strong>📱 Si el Médico olvidó el Celular o no tiene Batería:</strong> El operador de portería busca el CMP en la pestaña <strong>«Administración»</strong> y presiona <strong>✓ (Validar Manual)</strong>.
+  </div>
+  <div class="alert-green">
+    <strong>👥 Si el Acompañante llega solo o a diferente hora:</strong> Puede ingresar presentando su propio código QR (terminado en <code>-ACOMP1</code>) sin que el médico titular esté presente.
+  </div>
+
+  <div style="text-align: center; margin-top: 30px; border-top: 1.5px solid #cbd5e1; padding-top: 15px; font-size: 9.5px; color: #64748b;">
+    <strong>COLEGIO MÉDICO DEL PERÚ — CONSEJO REGIONAL XX PASCO</strong><br>
+    Manual Oficial de Operaciones • Evento Oficial 2026
+  </div>
+
+</body>
+</html>

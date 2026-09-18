@@ -255,6 +255,12 @@ function doPost(e) {
         const nomAcompIdx = findHeaderIndex(headers, ["Nombres Acompañantes", "Nombre Acompañante"]);
         const montoIdx = findHeaderIndex(headers, ["Monto Abonado (S/)", "Monto Abonado", "Monto"]);
         const metodoIdx = findHeaderIndex(headers, ["Medio de Pago", "Medio"]);
+        const estadoTitIdx = findHeaderIndex(headers, ["Estado Asistencia", "Asistencia", "Estado"]);
+        const fechaIngresoTitIdx = findHeaderIndex(headers, ["Fecha y Hora Ingreso", "Fecha Ingreso"]);
+        const validadorTitIdx = findHeaderIndex(headers, ["Validado Por"]);
+        const estadoAcompIdx = findHeaderIndex(headers, ["Estado Asistencia Acompañante"]);
+        const fechaIngresoAcompIdx = findHeaderIndex(headers, ["Fecha y Hora Ingreso Acompañante"]);
+        const validadorAcompIdx = findHeaderIndex(headers, ["Validado Por Acompañante"]);
         
         if (enlaceVoucherDrive && voucherIdx !== -1) {
           sheet.getRange(existingRowIndex, voucherIdx + 1).setValue(enlaceVoucherDrive);
@@ -264,6 +270,24 @@ function doPost(e) {
         }
         if (body.nroOperacion && nroOpIdx !== -1) {
           sheet.getRange(existingRowIndex, nroOpIdx + 1).setValue(body.nroOperacion);
+        }
+        if (body.estado && estadoTitIdx !== -1) {
+          sheet.getRange(existingRowIndex, estadoTitIdx + 1).setValue(body.estado);
+        }
+        if (body.fechaIngreso && fechaIngresoTitIdx !== -1) {
+          sheet.getRange(existingRowIndex, fechaIngresoTitIdx + 1).setValue(body.fechaIngreso);
+        }
+        if (body.validadoPor && validadorTitIdx !== -1) {
+          sheet.getRange(existingRowIndex, validadorTitIdx + 1).setValue(body.validadoPor);
+        }
+        if (body.estadoAcompanante && estadoAcompIdx !== -1) {
+          sheet.getRange(existingRowIndex, estadoAcompIdx + 1).setValue(body.estadoAcompanante);
+        }
+        if (body.fechaIngresoAcompanante && fechaIngresoAcompIdx !== -1) {
+          sheet.getRange(existingRowIndex, fechaIngresoAcompIdx + 1).setValue(body.fechaIngresoAcompanante);
+        }
+        if (body.validadoPorAcompanante && validadorAcompIdx !== -1) {
+          sheet.getRange(existingRowIndex, validadorAcompIdx + 1).setValue(body.validadoPorAcompanante);
         }
         if (numAcomp > 0) {
           if (acompIdx !== -1) sheet.getRange(existingRowIndex, acompIdx + 1).setValue(numAcomp);

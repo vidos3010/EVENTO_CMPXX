@@ -353,7 +353,18 @@ const SheetsService = {
             const nombresAcompanantes = nomAcompRemote || local.nombresAcompanantes || (numAcomp > 0 ? "Acompañante Registrado" : "Ninguno");
 
             const estadoPagoRemote = String(this.getField(row, ["Estado Pago", "Estado de Pago", "estadoPago"]) || "").trim();
-            const estadoPago = estadoPagoRemote || local.estadoPago || (numAcomp > 0 ? "Pendiente de Validación" : "Gratuito");
+            const cleanEstadoPagoRemote = estadoPagoRemote.toLowerCase();
+            const isLocalPagoAprobado = local.estadoPago === "Aprobado" || local.estadoPago === "Pagado";
+            const isRemotePagoAprobado = cleanEstadoPagoRemote.includes("aprobado") || cleanEstadoPagoRemote.includes("pagado");
+
+            let estadoPago = "Gratuito";
+            if (numAcomp > 0) {
+              if (isLocalPagoAprobado || isRemotePagoAprobado) {
+                estadoPago = "Aprobado";
+              } else {
+                estadoPago = estadoPagoRemote || local.estadoPago || "Pendiente de Validación";
+              }
+            }
 
             let fechaIngreso = String(this.getField(row, ["Fecha y Hora Ingreso", "fechaIngreso"]) || local.fechaIngreso || "");
             if (fechaIngreso.includes("drive.google.com") || fechaIngreso.includes("googleusercontent.com")) {
@@ -387,10 +398,12 @@ const SheetsService = {
             let finalEstadoTitular = "Pendiente";
             if (cleanEstadoRemote === "ingreso" || cleanEstadoRemote === "asistio" || (fechaIngreso && fechaIngreso.length > 3)) {
               finalEstadoTitular = "Ingresó";
-            } else if (cleanEstadoRemote === "pendiente") {
-              finalEstadoTitular = "Pendiente";
+            } else if (StorageService.esIngresado(local, "titular")) {
+              finalEstadoTitular = "Ingresó";
+              if (!fechaIngreso) fechaIngreso = local.fechaIngreso || "";
+              if (!validadoPor) validadoPor = local.validadoPor || "";
             } else {
-              finalEstadoTitular = StorageService.esIngresado(local, "titular") ? "Ingresó" : (local.estado || "Pendiente");
+              finalEstadoTitular = "Pendiente";
             }
 
             const estadoAcompRemote = String(this.getField(row, ["Estado Asistencia Acompañante", "estadoAcompanante"]) || "").trim();
@@ -399,10 +412,12 @@ const SheetsService = {
             if (numAcomp > 0) {
               if (cleanEstadoAcompRemote === "ingreso" || cleanEstadoAcompRemote === "asistio" || (fechaIngresoAcompanante && fechaIngresoAcompanante.length > 3)) {
                 finalEstadoAcomp = "Ingresó";
-              } else if (cleanEstadoAcompRemote === "pendiente") {
-                finalEstadoAcomp = "Pendiente";
+              } else if (StorageService.esIngresado(local, "acompanante")) {
+                finalEstadoAcomp = "Ingresó";
+                if (!fechaIngresoAcompanante) fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
+                if (!validadoPorAcompanante) validadoPorAcompanante = local.validadoPorAcompanante || "";
               } else {
-                finalEstadoAcomp = StorageService.esIngresado(local, "acompanante") ? "Ingresó" : (local.estadoAcompanante || "Pendiente");
+                finalEstadoAcomp = "Pendiente";
               }
             }
 

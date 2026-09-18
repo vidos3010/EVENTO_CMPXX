@@ -665,6 +665,37 @@ const StorageService = {
   },
 
   /**
+   * Buscar índice de asistente por ID de Reserva, CMP o documento
+   */
+  buscarIndiceAsistente(criterio) {
+    if (!criterio) return -1;
+    const lista = this.getAsistentes();
+    const query = String(criterio).trim().toLowerCase();
+    const cleanNum = query.replace(/^0+/, "") || query;
+
+    return lista.findIndex(a => {
+      const idR = a.idReserva ? a.idReserva.toLowerCase() : "";
+      const cmpA = a.cmp ? String(a.cmp).trim().toLowerCase() : "";
+      const cleanCmpA = cmpA.replace(/^0+/, "") || cmpA;
+      const dniA = a.dni ? String(a.dni).trim().toLowerCase() : "";
+      const qrTit = a.qrTitular ? String(a.qrTitular).trim().toLowerCase() : "";
+      const qrH = a.qrHash ? String(a.qrHash).trim().toLowerCase() : "";
+      const qrAcomp = a.qrAcompanante ? String(a.qrAcompanante).trim().toLowerCase() : "";
+
+      return (
+        idR === query ||
+        cmpA === query ||
+        cleanCmpA === cleanNum ||
+        dniA === query ||
+        qrTit === query ||
+        qrH === query ||
+        qrAcomp === query ||
+        (a.nombres && a.nombres.toLowerCase() === query)
+      );
+    });
+  },
+
+  /**
    * Marcar asistencia (Validar ingreso independiente para Titular o Acompañante)
    */
   marcarIngreso(codigo, validador = "Staff Puerta", tipo = null) {
@@ -840,7 +871,7 @@ const StorageService = {
    */
   restablecerEstado(idReserva, objetivo = "ambos") {
     const lista = this.getAsistentes();
-    const index = lista.findIndex(a => a.idReserva === idReserva);
+    const index = this.buscarIndiceAsistente(idReserva);
     if (index !== -1) {
       if (objetivo === "ambos" || objetivo === "titular") {
         lista[index].estado = "Pendiente";
@@ -853,21 +884,29 @@ const StorageService = {
         lista[index].validadoPorAcompanante = "";
       }
       this.guardarTodos(lista);
+      this.guardarUltimaReserva(lista[index]);
       return true;
     }
     return false;
   },
 
   /**
-   * Eliminar un asistente por su ID de Reserva o CMP
+   * Eliminar un asistente por su ID de Reserva, CMP o criterio
    */
-  eliminarAsistente(idReserva) {
+  eliminarAsistente(criterio) {
+    const query = String(criterio).trim().toLowerCase();
+    const cleanNum = query.replace(/^0+/, "") || query;
     let lista = this.getAsistentes();
-    lista = lista.filter(a => a.idReserva !== idReserva && a.cmp !== idReserva);
+    lista = lista.filter(a => {
+      const idR = a.idReserva ? a.idReserva.toLowerCase() : "";
+      const cmpA = a.cmp ? String(a.cmp).trim().toLowerCase() : "";
+      const cleanCmpA = cmpA.replace(/^0+/, "") || cmpA;
+      return idR !== query && cmpA !== query && cleanCmpA !== cleanNum && a.idReserva !== criterio && a.cmp !== criterio;
+    });
     this.guardarTodos(lista);
 
     const ultima = this.getUltimaReserva();
-    if (ultima && (ultima.idReserva === idReserva || ultima.cmp === idReserva)) {
+    if (ultima && (ultima.idReserva === criterio || ultima.cmp === criterio || String(ultima.idReserva || '').toLowerCase() === query || String(ultima.cmp || '').toLowerCase() === query)) {
       localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.ULTIMA_RESERVA);
       localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.ULTIMO_REGISTRO);
     }

@@ -911,7 +911,7 @@ const AdminService = {
    */
   aprobarPago(idReserva) {
     const lista = StorageService.getAsistentes();
-    const idx = lista.findIndex(a => a.idReserva === idReserva);
+    const idx = StorageService.buscarIndiceAsistente(idReserva);
     if (idx === -1) return;
 
     lista[idx].estadoPago = "Aprobado";

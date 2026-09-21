@@ -892,68 +892,6 @@ const App = {
   },
 
   /**
-   * Subida posterior de voucher para boletos que olvidaron adjuntarlo en la inscripción
-   */
-  async subirVoucherPosterior(event, idReserva) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const inputFile = event.target;
-
-    const asistente = StorageService.buscarAsistente(idReserva);
-    if (!asistente) {
-      App.showToast("Boleto no encontrado.", "error");
-      return;
-    }
-
-    try {
-      App.showToast("Procesando y optimizando voucher...", "info");
-
-      // Comprimir a tamaño óptimo (~40KB)
-      const base64Img = await StorageService.comprimirImagen(file, 900, 0.72);
-      if (!base64Img) {
-        App.showToast("No se pudo procesar la imagen. Intente con otro archivo.", "error");
-        return;
-      }
-
-      // 1. Actualizar en almacenamiento local garantizando persistencia
-      const resVoucher = await StorageService.guardarVoucher(idReserva, base64Img, "Pendiente de Validación");
-
-      if (!resVoucher.success) {
-        App.showToast(resVoucher.mensaje || "Error al guardar el voucher. Intente con una imagen más pequeña.", "error");
-        return;
-      }
-
-      const asistenteActualizado = resVoucher.asistente;
-
-      // 2. Re-renderizar boleto inmediatamente con datos actualizados
-      QRManager.renderizarTicket(asistenteActualizado, "ticket-container");
-      if (typeof QRManager !== "undefined") QRManager.reproducirSonido("success");
-      App.showToast("¡Voucher de pago guardado y persistido con éxito!", "success");
-
-      // 3. Sincronizar en segundo plano con Google Sheets / Google Drive
-      if (typeof SheetsService !== "undefined" && SheetsService.isConfigured()) {
-        SheetsService.registrarEnSheets(asistenteActualizado).then(() => {
-          console.log("Voucher sincronizado y subido a Google Drive exitosamente.");
-        }).catch(err => {
-          console.warn("Sincronización de voucher en segundo plano:", err);
-        });
-      }
-
-      // 4. Actualizar panel de administración
-      if (typeof AdminService !== "undefined") {
-        AdminService.actualizarEstadisticas();
-        AdminService.renderizarTabla();
-      }
-    } catch (err) {
-      console.error("Error al subir voucher posterior:", err);
-      App.showToast("Error al procesar la imagen del voucher.", "error");
-    } finally {
-      // Resetear el input para poder seleccionar el mismo archivo nuevamente si es necesario
-      if (inputFile) inputFile.value = "";
-    }
-  },
-
-  /**
    * Mostrar Notificaciones Toast
    */
   showToast(mensaje, tipo = "info") {

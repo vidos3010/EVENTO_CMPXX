@@ -6,8 +6,6 @@
  */
 
 const RegistroService = {
-  voucherBase64: "",
-
   /**
    * Inicializar escuchadores del formulario de registro
    */
@@ -32,66 +30,18 @@ const RegistroService = {
       });
     }
 
-    // Control de acompañante y despliegue del módulo de pago
+    // Control de acompañante (mostrar/ocultar campo de nombre de acompañante)
     const selectAcompanantes = document.getElementById("reg-acompanantes");
-    const containerPago = document.getElementById("container-pago-acompanantes");
-    const txtMontoTotal = document.getElementById("pago-monto-total");
+    const containerNombreAcomp = document.getElementById("container-nombre-acompanante");
 
     if (selectAcompanantes) {
       selectAcompanantes.addEventListener("change", (e) => {
         const val = parseInt(e.target.value || 0);
-
         if (val > 0) {
-          if (containerPago) containerPago.classList.remove("hidden");
-          if (txtMontoTotal) txtMontoTotal.innerText = `S/ 20.00`;
+          if (containerNombreAcomp) containerNombreAcomp.classList.remove("hidden");
         } else {
-          if (containerPago) containerPago.classList.add("hidden");
-          if (txtMontoTotal) txtMontoTotal.innerText = `S/ 0.00`;
+          if (containerNombreAcomp) containerNombreAcomp.classList.add("hidden");
         }
-      });
-    }
-
-    // Manejo de carga de voucher de pago
-    const inputVoucher = document.getElementById("reg-voucher-file");
-    const labelVoucherText = document.getElementById("label-voucher-text");
-    const previewContainer = document.getElementById("voucher-preview-container");
-    const previewImg = document.getElementById("voucher-preview-img");
-    const btnRemoveVoucher = document.getElementById("btn-remove-voucher");
-
-    if (inputVoucher) {
-      inputVoucher.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          try {
-            App.showToast("Procesando y optimizando imagen del voucher...", "info");
-            const compressed = await StorageService.comprimirImagen(file, 800, 0.75);
-            this.voucherBase64 = compressed || "";
-            if (previewImg) previewImg.src = this.voucherBase64;
-            if (previewContainer) previewContainer.classList.remove("hidden");
-            if (labelVoucherText) labelVoucherText.innerText = "Cambiar Voucher";
-            App.showToast("✓ Captura del voucher lista y adjuntada.", "success");
-          } catch (err) {
-            console.error("Error al procesar voucher:", err);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              this.voucherBase64 = event.target.result;
-              if (previewImg) previewImg.src = this.voucherBase64;
-              if (previewContainer) previewContainer.classList.remove("hidden");
-              if (labelVoucherText) labelVoucherText.innerText = "Cambiar Voucher";
-            };
-            reader.readAsDataURL(file);
-          }
-        }
-      });
-    }
-
-    if (btnRemoveVoucher) {
-      btnRemoveVoucher.addEventListener("click", () => {
-        this.voucherBase64 = "";
-        if (inputVoucher) inputVoucher.value = "";
-        if (previewContainer) previewContainer.classList.add("hidden");
-        if (labelVoucherText) labelVoucherText.innerText = "Adjuntar Voucher";
-        App.showToast("Voucher removido.", "info");
       });
     }
   },
@@ -270,28 +220,11 @@ const RegistroService = {
       }
     }
 
-    // 3. VALIDACIÓN DE PAGO PARA ACOMPAÑANTE
-    let montoPago = 0;
-    let metodoPago = "Gratuito (Titular)";
-    let nroOperacion = "N/A";
-    let estadoPago = "Gratuito";
-    const voucherImg = this.voucherBase64 || "";
-
+    // 3. DATOS DE ACOMPAÑANTE (100% GRATUITO)
+    let nombresAcompanantes = "Ninguno";
     if (numAcompanantes > 0) {
-      montoPago = 20;
-      metodoPago = document.getElementById("reg-metodo-pago")?.value || "Yape";
-      nroOperacion = document.getElementById("reg-nro-operacion")?.value.trim() || "";
-      estadoPago = "Pendiente de Validación";
-
-      if (!nroOperacion) {
-        App.showToast("Por favor ingrese el N° de Operación del pago de su acompañante.", "warning");
-        const inputOp = document.getElementById("reg-nro-operacion");
-        if (inputOp) {
-          inputOp.focus();
-          inputOp.classList.add("ring-2", "ring-rose-500");
-        }
-        return;
-      }
+      const inputNombreAcomp = document.getElementById("reg-nombres-acompanante")?.value.trim();
+      nombresAcompanantes = inputNombreAcomp || "Acompañante Registrado";
     }
 
     // Cambiar estado del botón a cargando
@@ -316,8 +249,7 @@ const RegistroService = {
         hour: "2-digit", minute: "2-digit", second: "2-digit",
         hour12: false
       });
-      const qrTitular = `${idReserva}-${cmp}`;
-      const qrAcompanante = numAcompanantes > 0 ? `${idReserva}-ACOMP1` : "";
+      const qrHash = `${idReserva}-${cmp}`;
 
       const nuevoAsistente = {
         idReserva,
@@ -329,19 +261,20 @@ const RegistroService = {
         celular,
         correo: correo || "",
         acompanantes: numAcompanantes,
-        nombresAcompanantes: numAcompanantes > 0 ? "Acompañante Registrado" : "Ninguno",
+        nombresAcompanantes,
         requerimientos: "Ninguno",
-        montoPago,
-        metodoPago,
-        nroOperacion,
-        voucherImg,
-        estadoPago,
+        montoPago: 0,
+        metodoPago: "Gratuito",
+        nroOperacion: "N/A",
+        voucherImg: "",
+        enlaceVoucherDrive: "",
+        estadoPago: "Gratuito",
         estado: "Pendiente",
         fechaIngreso: "",
         validadoPor: "",
-        qrTitular,
-        qrHash: qrTitular,
-        qrAcompanante,
+        qrTitular: qrHash,
+        qrHash: qrHash,
+        qrAcompanante: numAcompanantes > 0 ? qrHash : "",
         estadoAcompanante: numAcompanantes > 0 ? "Pendiente" : "",
         fechaIngresoAcompanante: "",
         validadoPorAcompanante: ""
@@ -438,19 +371,15 @@ const RegistroService = {
     const form = document.getElementById("form-registro");
 
     if (form) form.reset();
-    this.voucherBase64 = "";
 
-    const previewContainer = document.getElementById("voucher-preview-container");
-    if (previewContainer) previewContainer.classList.add("hidden");
+    const containerNombreAcomp = document.getElementById("container-nombre-acompanante");
+    if (containerNombreAcomp) containerNombreAcomp.classList.add("hidden");
 
     const feedback = document.getElementById("cmp-padron-feedback");
     if (feedback) {
       feedback.className = "hidden";
       feedback.innerHTML = "";
     }
-
-    const containerPago = document.getElementById("container-pago-acompanantes");
-    if (containerPago) containerPago.classList.add("hidden");
 
     const inputNombres = document.getElementById("reg-nombres");
     if (inputNombres) {

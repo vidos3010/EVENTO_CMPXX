@@ -413,59 +413,14 @@ const StorageService = {
     }
 
     const idReserva = a.idReserva || `CMP-${cleanCmp || '0000'}`;
-    const qrTitular = a.qrTitular || a.qrHash || `${idReserva}-${cleanCmp || 'TITULAR'}`;
-    const qrAcompanante = a.qrAcompanante || (numAcomp > 0 ? `${idReserva}-ACOMP1` : "");
+    const qrHash = a.qrHash || a.qrTitular || `${idReserva}-${cleanCmp || 'TITULAR'}`;
     const nombresAcompanantes = a.nombresAcompanantes || (numAcomp > 0 ? "Acompañante Registrado" : "Ninguno");
-    const montoPago = a.montoPago !== undefined ? parseFloat(a.montoPago) : (numAcomp > 0 ? 20 : 0);
-
-    let voucherImg = a.voucherImg || "";
-    let enlaceVoucherDrive = a.enlaceVoucherDrive || "";
-
-    // Auto-recuperación y limpieza si el enlace de Google Drive cayó en otra columna (como fechaIngreso)
-    if (!enlaceVoucherDrive) {
-      for (const [key, val] of Object.entries(a)) {
-        if (typeof val === "string" && (val.includes("drive.google.com") || val.includes("docs.google.com") || val.includes("googleusercontent.com"))) {
-          enlaceVoucherDrive = val.trim();
-          break;
-        }
-      }
-    }
 
     let fechaIngreso = a.fechaIngreso || "";
-    if (fechaIngreso.includes("drive.google.com") || fechaIngreso.includes("googleusercontent.com")) {
-      if (!enlaceVoucherDrive) enlaceVoucherDrive = fechaIngreso;
-      fechaIngreso = "";
-    }
-
     let validadoPor = a.validadoPor || "";
-    if (validadoPor.includes("drive.google.com") || validadoPor.includes("googleusercontent.com")) {
-      if (!enlaceVoucherDrive) enlaceVoucherDrive = validadoPor;
-      validadoPor = "";
-    }
 
-    let nroOperacion = a.nroOperacion || "";
-    if (nroOperacion.includes("drive.google.com") || nroOperacion.includes("googleusercontent.com")) {
-      if (!enlaceVoucherDrive) enlaceVoucherDrive = nroOperacion;
-      nroOperacion = "";
-    }
-
-    // Si voucherImg está vacío, recuperar desde la memoria caché global
-    if (!voucherImg && StorageService._voucherMemoryCache) {
-      const cleanId = String(idReserva || "").trim().toLowerCase();
-      const cleanNum = String(cleanCmp || "").trim().toLowerCase();
-      voucherImg = StorageService._voucherMemoryCache.get(cleanId) ||
-                   StorageService._voucherMemoryCache.get(cleanNum) || "";
-    }
-
-    const tieneVoucher = Boolean(
-      a.tieneVoucher ||
-      (voucherImg && voucherImg.trim() !== "") ||
-      (enlaceVoucherDrive && enlaceVoucherDrive.trim() !== "")
-    );
-
-    // Normalizar estados de ingreso con certeza
-    const titularYaIngreso = this.esIngresado(a, "titular");
-    const acompYaIngreso = this.esIngresado(a, "acompanante");
+    // Normalizar estado de ingreso
+    const yaIngreso = this.esIngresado(a);
 
     return {
       ...a,
@@ -474,23 +429,24 @@ const StorageService = {
       nombres: nombresOficiales,
       dni: dniOficial,
       celular: celularOficial,
-      voucherImg,
-      enlaceVoucherDrive,
-      tieneVoucher,
+      voucherImg: "",
+      enlaceVoucherDrive: "",
+      tieneVoucher: false,
       acompanantes: numAcomp,
       nombresAcompanantes: nombresAcompanantes,
-      montoPago: isNaN(montoPago) ? (numAcomp > 0 ? 20 : 0) : montoPago,
-      nroOperacion: nroOperacion || (numAcomp > 0 ? "" : "N/A"),
-      qrTitular,
-      qrHash: qrTitular,
-      qrAcompanante,
-      estadoPago: a.estadoPago || (numAcomp > 0 ? "Pendiente de Validación" : "Gratuito"),
-      estado: titularYaIngreso ? "Ingresó" : (a.estado || "Pendiente"),
+      montoPago: 0,
+      metodoPago: "Gratuito",
+      nroOperacion: "N/A",
+      qrTitular: qrHash,
+      qrHash: qrHash,
+      qrAcompanante: numAcomp > 0 ? qrHash : "",
+      estadoPago: "Gratuito",
+      estado: yaIngreso ? "Ingresó" : (a.estado || "Pendiente"),
       fechaIngreso: fechaIngreso,
       validadoPor: validadoPor,
-      estadoAcompanante: numAcomp > 0 ? (acompYaIngreso ? "Ingresó" : (a.estadoAcompanante || "Pendiente")) : "",
-      fechaIngresoAcompanante: a.fechaIngresoAcompanante || "",
-      validadoPorAcompanante: a.validadoPorAcompanante || ""
+      estadoAcompanante: numAcomp > 0 ? (yaIngreso ? "Ingresó" : (a.estadoAcompanante || "Pendiente")) : "",
+      fechaIngresoAcompanante: numAcomp > 0 ? (a.fechaIngresoAcompanante || fechaIngreso) : "",
+      validadoPorAcompanante: numAcomp > 0 ? (a.validadoPorAcompanante || validadoPor) : ""
     };
   },
 
@@ -696,9 +652,9 @@ const StorageService = {
   },
 
   /**
-   * Marcar asistencia (Validar ingreso independiente para Titular o Acompañante)
+   * Marcar asistencia (Validar ingreso del boleto QR: 1 Persona o Pase Doble para 2 Personas)
    */
-  marcarIngreso(codigo, validador = "Staff Puerta", tipo = null) {
+  marcarIngreso(codigo, validador = "Staff Puerta") {
     const lista = this.getAsistentes();
     let rawQuery = String(codigo || "").trim();
 
@@ -708,10 +664,7 @@ const StorageService = {
         const urlObj = new URL(rawQuery);
         const pCmp = urlObj.searchParams.get("cmp");
         const pRes = urlObj.searchParams.get("reserva") || urlObj.searchParams.get("id");
-        const pTipo = urlObj.searchParams.get("tipo");
-        if (pTipo === "acompanante" || pTipo === "acomp") {
-          rawQuery = `${pRes || pCmp}-ACOMP1`;
-        } else if (pRes || pCmp) {
+        if (pRes || pCmp) {
           rawQuery = pRes || pCmp;
         }
       } catch (e) {
@@ -722,33 +675,13 @@ const StorageService = {
     const query = rawQuery.toLowerCase();
     const cleanNum = query.replace(/^0+/, "") || query;
 
-    // Detectar si el código escaneado apunta explícitamente al Pase del Acompañante
-    const esEscaneoAcompanante = tipo === "acompanante" || (tipo !== "titular" && query.includes("acomp"));
-
     const index = lista.findIndex(a => {
       const cmpA = a.cmp ? String(a.cmp).trim().toLowerCase() : "";
       const cleanCmpA = cmpA.replace(/^0+/, "") || cmpA;
       const dniA = a.dni ? String(a.dni).trim().toLowerCase() : "";
-      const qrAcomp = a.qrAcompanante ? String(a.qrAcompanante).trim().toLowerCase() : "";
       const qrTit = a.qrTitular ? String(a.qrTitular).trim().toLowerCase() : "";
       const qrH = a.qrHash ? String(a.qrHash).trim().toLowerCase() : "";
       const idR = a.idReserva ? a.idReserva.toLowerCase() : "";
-
-      if (esEscaneoAcompanante) {
-        return (
-          (qrAcomp && qrAcomp === query) ||
-          query === `${idR}-acomp1` ||
-          query === `${idR}-acomp` ||
-          query === `${cmpA}-acomp1` ||
-          query === `${cmpA}-acomp` ||
-          query === `${cleanCmpA}-acomp1` ||
-          query === `${cleanCmpA}-acomp` ||
-          (query.includes("acomp") && (query.startsWith(idR) || (cmpA && query.startsWith(cmpA)) || (cleanCmpA && query.startsWith(cleanCmpA))))
-        );
-      }
-
-      // Validación estricta de Médico Titular (nunca debe coincidir con un código de acompañante)
-      if (query.includes("acomp")) return false;
 
       return (
         idR === query ||
@@ -757,7 +690,8 @@ const StorageService = {
         cmpA === query ||
         cleanCmpA === cleanNum ||
         dniA === query ||
-        (qrTit && (query === qrTit || query === `${idR}-${cmpA}` || query === `${idR}-${cleanCmpA}`))
+        (query.includes(idR) && idR.length > 3) ||
+        (cleanCmpA && query.includes(cleanCmpA) && cleanCmpA.length >= 4)
       );
     });
 
@@ -770,89 +704,40 @@ const StorageService = {
     }
 
     const asistente = lista[index];
+    const numAcomp = parseInt(asistente.acompanantes || 0);
+    const esPaseDoble = numAcomp > 0;
+    const personas = esPaseDoble ? 2 : 1;
+
     const fechaHora = new Date().toLocaleString("es-PE", {
       year: "numeric", month: "2-digit", day: "2-digit",
       hour: "2-digit", minute: "2-digit", second: "2-digit",
       hour12: false
     });
 
-    // =========================================================================
-    // CASO A: VALIDACIÓN DE PASE DE ACOMPAÑANTE
-    // =========================================================================
-    if (esEscaneoAcompanante) {
-      const numAcomp = parseInt(asistente.acompanantes || 0);
-      if (numAcomp === 0) {
-        return {
-          success: false,
-          estado: "SIN_ACOMPANANTE",
-          mensaje: `El registro de ${asistente.nombres} no incluye pase de acompañante.`,
-          asistente
-        };
-      }
-
-      // 1. Verificar si el pago del acompañante fue aprobado por el Admin
-      const isPagado = asistente.estadoPago === "Aprobado" || asistente.estadoPago === "Pagado";
-      if (!isPagado) {
-        return {
-          success: false,
-          estado: "PAGO_PENDIENTE",
-          mensaje: `⚠️ PAGO NO APROBADO: El abono de S/ 20.00 del acompañante de ${asistente.nombres} aún no ha sido confirmado por Administración.`,
-          asistente,
-          esAcompanante: true
-        };
-      }
-
-      // 2. Verificar si el acompañante ya ingresó
-      if (this.esIngresado(asistente, "acompanante")) {
-        return {
-          success: true,
-          estado: "YA_INGRESADO",
-          esAcompanante: true,
-          mensaje: "¡ALERTA! El boleto de Acompañante YA FUE VALIDADO previamente.",
-          fechaPrimerIngreso: asistente.fechaIngresoAcompanante || asistente.fechaIngreso || fechaHora,
-          validadoPor: asistente.validadoPorAcompanante || asistente.validadoPor || validador,
-          asistente
-        };
-      }
-
-      // 3. Registrar ingreso del acompañante
-      asistente.estadoAcompanante = "Ingresó";
-      asistente.fechaIngresoAcompanante = fechaHora;
-      asistente.validadoPorAcompanante = validador;
-
-      lista[index] = asistente;
-      this.guardarTodos(lista);
-      this.guardarUltimaReserva(asistente);
-
-      return {
-        success: true,
-        estado: "VALIDO",
-        esAcompanante: true,
-        mensaje: "¡Ingreso de Acompañante Autorizado!",
-        horaIngreso: fechaHora,
-        asistente
-      };
-    }
-
-    // =========================================================================
-    // CASO B: VALIDACIÓN DE PASE DE MÉDICO TITULAR (COLEGIADO)
-    // =========================================================================
-    if (this.esIngresado(asistente, "titular")) {
+    // Verificar si ya ingresó
+    if (this.esIngresado(asistente)) {
       return {
         success: true,
         estado: "YA_INGRESADO",
-        esAcompanante: false,
-        mensaje: "¡ALERTA! El boleto Titular YA FUE VALIDADO previamente.",
+        esPaseDoble,
+        personas,
+        mensaje: `¡ALERTA! Este boleto (${esPaseDoble ? 'Pase Doble - 2 Personas' : 'Pase Individual - 1 Persona'}) YA FUE VALIDADO previamente.`,
         fechaPrimerIngreso: asistente.fechaIngreso || fechaHora,
         validadoPor: asistente.validadoPor || validador,
         asistente
       };
     }
 
-    // Registrar ingreso del titular
+    // Registrar ingreso
     asistente.estado = "Ingresó";
     asistente.fechaIngreso = fechaHora;
     asistente.validadoPor = validador;
+
+    if (esPaseDoble) {
+      asistente.estadoAcompanante = "Ingresó";
+      asistente.fechaIngresoAcompanante = fechaHora;
+      asistente.validadoPorAcompanante = validador;
+    }
 
     lista[index] = asistente;
     this.guardarTodos(lista);
@@ -861,30 +746,30 @@ const StorageService = {
     return {
       success: true,
       estado: "VALIDO",
-      esAcompanante: false,
-      mensaje: "¡Ingreso Titular Autorizado Correctamente!",
+      esPaseDoble,
+      personas,
+      mensaje: esPaseDoble 
+        ? "¡Ingreso Autorizado para 2 Personas (Titular + Acompañante)!" 
+        : "¡Ingreso Individual Autorizado Correctamente (1 Persona)!",
       horaIngreso: fechaHora,
       asistente
     };
   },
 
   /**
-   * Restablecer estado a Pendiente (Titular, Acompañante o Ambos)
+   * Restablecer estado a Pendiente
    */
-  restablecerEstado(idReserva, objetivo = "ambos") {
+  restablecerEstado(idReserva) {
     const lista = this.getAsistentes();
     const index = this.buscarIndiceAsistente(idReserva);
     if (index !== -1) {
-      if (objetivo === "ambos" || objetivo === "titular") {
-        lista[index].estado = "Pendiente";
-        lista[index].fechaIngreso = "";
-        lista[index].validadoPor = "";
-      }
-      if (objetivo === "ambos" || objetivo === "acompanante") {
-        lista[index].estadoAcompanante = "Pendiente";
-        lista[index].fechaIngresoAcompanante = "";
-        lista[index].validadoPorAcompanante = "";
-      }
+      lista[index].estado = "Pendiente";
+      lista[index].fechaIngreso = "";
+      lista[index].validadoPor = "";
+      lista[index].estadoAcompanante = lista[index].acompanantes > 0 ? "Pendiente" : "";
+      lista[index].fechaIngresoAcompanante = "";
+      lista[index].validadoPorAcompanante = "";
+      
       this.guardarTodos(lista);
       this.guardarUltimaReserva(lista[index]);
       return true;
@@ -958,7 +843,7 @@ const StorageService = {
   },
 
   /**
-   * Datos iniciales de demostración con soporte para Option 2
+   * Datos iniciales de demostración
    */
   getDatosIniciales() {
     return [
@@ -973,18 +858,19 @@ const StorageService = {
         correo: "gabriela.ponce@cmp.org.pe",
         acompanantes: 1,
         nombresAcompanantes: "Dr. Marco Aurelio Quispe",
-        requerimientos: "Mesa reservada cerca al escenario",
-        montoPago: 20,
-        metodoPago: "Yape",
-        nroOperacion: "98234710",
+        requerimientos: "Ninguno",
+        montoPago: 0,
+        metodoPago: "Gratuito",
+        nroOperacion: "N/A",
         voucherImg: "",
-        estadoPago: "Aprobado",
+        enlaceVoucherDrive: "",
+        estadoPago: "Gratuito",
         estado: "Pendiente",
         fechaIngreso: "",
         validadoPor: "",
         qrTitular: "CMP-20261007-1001-121642",
         qrHash: "CMP-20261007-1001-121642",
-        qrAcompanante: "CMP-20261007-1001-ACOMP1",
+        qrAcompanante: "CMP-20261007-1001-121642",
         estadoAcompanante: "Pendiente",
         fechaIngresoAcompanante: "",
         validadoPorAcompanante: ""
@@ -1002,9 +888,10 @@ const StorageService = {
         nombresAcompanantes: "Ninguno",
         requerimientos: "Ninguno",
         montoPago: 0,
-        metodoPago: "Gratuito (Titular)",
+        metodoPago: "Gratuito",
         nroOperacion: "N/A",
         voucherImg: "",
+        enlaceVoucherDrive: "",
         estadoPago: "Gratuito",
         estado: "Pendiente",
         fechaIngreso: "",

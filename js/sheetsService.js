@@ -107,15 +107,9 @@ const SheetsService = {
   /**
    * Validar ingreso en tiempo real contra Google Sheets
    */
-  async validarIngresoEnSheets(codigo, validador = "Staff Puerta", tipo = null) {
-    let finalTipo = tipo;
-    if (!finalTipo) {
-      const q = String(codigo || "").toLowerCase();
-      finalTipo = q.includes("acomp") ? "acompanante" : "titular";
-    }
-
+  async validarIngresoEnSheets(codigo, validador = "Staff Puerta") {
     // 1. Asegurar actualización local inmediata
-    const resLocal = StorageService.marcarIngreso(codigo, validador, finalTipo);
+    const resLocal = StorageService.marcarIngreso(codigo, validador);
 
     if (!this.isConfigured()) {
       return resLocal;
@@ -136,8 +130,7 @@ const SheetsService = {
         body: JSON.stringify({
           action: "validarIngreso",
           codigo: codigo,
-          validador: validador,
-          tipo: finalTipo
+          validador: validador
         })
       }).catch(err => console.warn("Sync Sheets error:", err));
 
@@ -151,8 +144,8 @@ const SheetsService = {
   /**
    * Restablecer estado a Pendiente en Sheets
    */
-  async restablecerEstadoEnSheets(idReserva, objetivo = "ambos") {
-    StorageService.restablecerEstado(idReserva, objetivo);
+  async restablecerEstadoEnSheets(idReserva) {
+    StorageService.restablecerEstado(idReserva);
 
     if (!this.isConfigured()) return { success: true };
 
@@ -170,9 +163,7 @@ const SheetsService = {
         },
         body: JSON.stringify({
           action: "reiniciarAsistencia",
-          codigo: idReserva,
-          tipo: objetivo,
-          objetivo: objetivo
+          codigo: idReserva
         })
       }).catch(err => console.warn("Error restableciendo en Sheets:", err));
       return { success: true };
@@ -224,7 +215,7 @@ const SheetsService = {
   },
 
   /**
-   * Obtener valor de fila de forma flexible (insensible a caracteres especiales, mayúsculas y espacios)
+   * Obtener valor de fila de forma flexible
    */
   getField(row, aliases) {
     if (!row || typeof row !== "object") return "";
@@ -301,21 +292,7 @@ const SheetsService = {
             
             const local = localMap.get(idReserva.toLowerCase()) || localMap.get(cleanCmp) || localMap.get(rawCmp.toLowerCase()) || {};
             
-            let driveUrl = String(this.getField(row, ["Enlace Voucher Drive", "Voucher Drive", "Voucher", "enlaceVoucherDrive"]) || "").trim();
-            
-            // Si driveUrl está vacío, buscar si vino en alguna otra columna por desfase histórico
-            if (!driveUrl) {
-              for (const [k, v] of Object.entries(row)) {
-                if (typeof v === "string" && (v.includes("drive.google.com") || v.includes("docs.google.com") || v.includes("googleusercontent.com"))) {
-                  driveUrl = v.trim();
-                  break;
-                }
-              }
-            }
-
-            const voucherImg = local.voucherImg || driveUrl || local.enlaceVoucherDrive || "";
-            
-            // Detección robusta de acompañantes
+            // Detección de acompañantes
             const rawAcompRemote = this.getField(row, [
               "N° Acompañantes", "Nº Acompañantes", "N° Acompañante", "Nº Acompañante",
               "Acompañantes", "Acompañante", "numAcomp", "nroAcompanantes", "acompanantes"
@@ -325,117 +302,43 @@ const SheetsService = {
             if (isNaN(numAcomp)) numAcomp = 0;
 
             const nomAcompRemote = String(this.getField(row, ["Nombres Acompañantes", "Nombre Acompañante", "nombresAcompanantes", "Acompañante"]) || "").trim();
-            const qrAcompRemote = String(this.getField(row, ["Código QR Acompañante", "QR Acompañante", "qrAcompanante"]) || "").trim();
             const localAcompNum = parseInt(local.acompanantes || 0);
 
-            // Proteger los datos locales si el sheet remoto viene vacío o desfasado
             if (numAcomp === 0) {
               if (localAcompNum > 0) {
                 numAcomp = localAcompNum;
-              } else if (
-                (nomAcompRemote && nomAcompRemote !== "Ninguno") ||
-                qrAcompRemote ||
-                (local.nombresAcompanantes && local.nombresAcompanantes !== "Ninguno") ||
-                local.qrAcompanante ||
-                parseFloat(local.montoPago) > 0
-              ) {
+              } else if (nomAcompRemote && nomAcompRemote !== "Ninguno") {
                 numAcomp = 1;
               }
             }
 
-            const montoRemoteStr = this.getField(row, ["Monto Abonado (S/)", "Monto Abonado", "montoPago", "Monto"]);
-            const montoRemote = parseFloat(montoRemoteStr);
-            const montoPago = !isNaN(montoRemote) ? montoRemote : (local.montoPago !== undefined ? local.montoPago : (numAcomp * 20));
-
             const finalIdReserva = idReserva || local.idReserva || `CMP-${rawCmp || '0000'}`;
-            const qrTitular = String(this.getField(row, ["Código QR Titular", "Código QR / Hash", "QR Titular", "qrTitular"]) || local.qrTitular || `${finalIdReserva}-${rawCmp}`);
-            const qrAcompanante = qrAcompRemote || local.qrAcompanante || (numAcomp > 0 ? `${finalIdReserva}-ACOMP1` : "");
+            const qrHash = String(this.getField(row, ["Código QR Titular", "Código QR / Hash", "Código QR Único", "QR Hash", "qrHash"]) || local.qrHash || `${finalIdReserva}-${rawCmp}`);
             const nombresAcompanantes = nomAcompRemote || local.nombresAcompanantes || (numAcomp > 0 ? "Acompañante Registrado" : "Ninguno");
 
-            const estadoPagoRemote = String(this.getField(row, ["Estado Pago", "Estado de Pago", "estadoPago"]) || "").trim();
-            const cleanEstadoPagoRemote = estadoPagoRemote.toLowerCase();
-            const isLocalPagoAprobado = local.estadoPago === "Aprobado" || local.estadoPago === "Pagado";
-            const isRemotePagoAprobado = cleanEstadoPagoRemote.includes("aprobado") || cleanEstadoPagoRemote.includes("pagado");
-
-            let estadoPago = "Gratuito";
-            if (numAcomp > 0) {
-              if (isLocalPagoAprobado || isRemotePagoAprobado) {
-                estadoPago = "Aprobado";
-              } else {
-                estadoPago = estadoPagoRemote || local.estadoPago || "Pendiente de Validación";
-              }
-            }
-
-            let fechaIngreso = String(this.getField(row, ["Fecha y Hora Ingreso", "fechaIngreso"]) || "");
-            if (fechaIngreso.includes("drive.google.com") || fechaIngreso.includes("googleusercontent.com")) {
-              if (!driveUrl) driveUrl = fechaIngreso;
-              fechaIngreso = "";
-            }
-
+            let fechaIngreso = String(this.getField(row, ["Fecha y Hora Ingreso", "fechaIngreso", "Hora Ingreso"]) || "");
             let validadoPor = String(this.getField(row, ["Validado Por", "validadoPor"]) || "");
-            if (validadoPor.includes("drive.google.com") || validadoPor.includes("googleusercontent.com")) {
-              if (!driveUrl) driveUrl = validadoPor;
-              validadoPor = "";
-            }
-
-            let nroOperacion = String(this.getField(row, ["N° Operación", "Nº Operación", "nroOperacion", "Operacion"]) || local.nroOperacion || (numAcomp > 0 ? "" : "N/A"));
-            if (nroOperacion.includes("drive.google.com") || nroOperacion.includes("googleusercontent.com")) {
-              if (!driveUrl) driveUrl = nroOperacion;
-              nroOperacion = "";
-            }
-
-            const tieneVoucher = Boolean(
-              local.tieneVoucher ||
-              (voucherImg && String(voucherImg).trim() !== "") ||
-              (driveUrl && String(driveUrl).trim() !== "")
-            );
-
-            let fechaIngresoAcompanante = String(this.getField(row, ["Fecha y Hora Ingreso Acompañante", "fechaIngresoAcompanante"]) || "");
-            let validadoPorAcompanante = String(this.getField(row, ["Validado Por Acompañante", "validadoPorAcompanante"]) || "");
 
             const estadoRemote = String(this.getField(row, ["Estado Asistencia", "estado", "Asistencia"]) || "").trim();
             const cleanEstadoRemote = estadoRemote.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            let finalEstadoTitular = "Pendiente";
+            let finalEstado = "Pendiente";
             
-            if (cleanEstadoRemote === "ingreso" || cleanEstadoRemote === "asistio" || cleanEstadoRemote === "presente" || cleanEstadoRemote === "si") {
-              finalEstadoTitular = "Ingresó";
+            if (cleanEstadoRemote.includes("ingres") || cleanEstadoRemote.includes("asist") || cleanEstadoRemote === "presente" || cleanEstadoRemote === "si") {
+              finalEstado = "Ingresó";
               fechaIngreso = fechaIngreso || local.fechaIngreso || "";
               validadoPor = validadoPor || local.validadoPor || "Escáner QR";
             } else if (cleanEstadoRemote === "pendiente") {
-              finalEstadoTitular = "Pendiente";
+              finalEstado = "Pendiente";
               fechaIngreso = "";
               validadoPor = "";
-            } else if (StorageService.esIngresado(local, "titular")) {
-              finalEstadoTitular = "Ingresó";
+            } else if (StorageService.esIngresado(local)) {
+              finalEstado = "Ingresó";
               fechaIngreso = local.fechaIngreso || "";
               validadoPor = local.validadoPor || "";
             } else {
-              finalEstadoTitular = local.estado || "Pendiente";
+              finalEstado = local.estado || "Pendiente";
               fechaIngreso = local.fechaIngreso || "";
               validadoPor = local.validadoPor || "";
-            }
-
-            const estadoAcompRemote = String(this.getField(row, ["Estado Asistencia Acompañante", "estadoAcompanante"]) || "").trim();
-            const cleanEstadoAcompRemote = estadoAcompRemote.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            let finalEstadoAcomp = "";
-            if (numAcomp > 0) {
-              if (cleanEstadoAcompRemote === "ingreso" || cleanEstadoAcompRemote === "asistio" || cleanEstadoAcompRemote === "presente" || cleanEstadoAcompRemote === "si") {
-                finalEstadoAcomp = "Ingresó";
-                fechaIngresoAcompanante = fechaIngresoAcompanante || local.fechaIngresoAcompanante || "";
-                validadoPorAcompanante = validadoPorAcompanante || local.validadoPorAcompanante || "Escáner QR";
-              } else if (cleanEstadoAcompRemote === "pendiente") {
-                finalEstadoAcomp = "Pendiente";
-                fechaIngresoAcompanante = "";
-                validadoPorAcompanante = "";
-              } else if (StorageService.esIngresado(local, "acompanante")) {
-                finalEstadoAcomp = "Ingresó";
-                fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
-                validadoPorAcompanante = local.validadoPorAcompanante || "";
-              } else {
-                finalEstadoAcomp = local.estadoAcompanante || "Pendiente";
-                fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
-                validadoPorAcompanante = local.validadoPorAcompanante || "";
-              }
             }
 
             return {
@@ -449,23 +352,23 @@ const SheetsService = {
               correo: String(this.getField(row, ["Correo Electrónico", "correo", "Email"]) || local.correo || ""),
               acompanantes: numAcomp,
               nombresAcompanantes: nombresAcompanantes,
-              requerimientos: String(this.getField(row, ["Requerimientos Especiales", "requerimientos"]) || local.requerimientos || "Ninguno"),
-              estadoPago: estadoPago,
-              montoPago: montoPago,
-              metodoPago: String(this.getField(row, ["Medio de Pago", "metodoPago"]) || local.metodoPago || (numAcomp > 0 ? "Yape" : "Gratuito (Titular)")),
-              nroOperacion: nroOperacion,
-              enlaceVoucherDrive: driveUrl || local.enlaceVoucherDrive || "",
-              voucherImg: voucherImg,
-              tieneVoucher: tieneVoucher,
-              estado: finalEstadoTitular,
-              fechaIngreso: finalEstadoTitular === "Ingresó" ? (fechaIngreso || local.fechaIngreso || "") : "",
-              validadoPor: finalEstadoTitular === "Ingresó" ? (validadoPor || local.validadoPor || "") : "",
-              qrTitular: qrTitular,
-              qrHash: qrTitular,
-              qrAcompanante: qrAcompanante,
-              estadoAcompanante: finalEstadoAcomp,
-              fechaIngresoAcompanante: finalEstadoAcomp === "Ingresó" ? (fechaIngresoAcompanante || local.fechaIngresoAcompanante || "") : "",
-              validadoPorAcompanante: finalEstadoAcomp === "Ingresó" ? (validadoPorAcompanante || local.validadoPorAcompanante || "") : ""
+              requerimientos: "Ninguno",
+              estadoPago: "Gratuito",
+              montoPago: 0,
+              metodoPago: "Gratuito",
+              nroOperacion: "N/A",
+              enlaceVoucherDrive: "",
+              voucherImg: "",
+              tieneVoucher: false,
+              estado: finalEstado,
+              fechaIngreso: finalEstado === "Ingresó" ? (fechaIngreso || local.fechaIngreso || "") : "",
+              validadoPor: finalEstado === "Ingresó" ? (validadoPor || local.validadoPor || "") : "",
+              qrTitular: qrHash,
+              qrHash: qrHash,
+              qrAcompanante: numAcomp > 0 ? qrHash : "",
+              estadoAcompanante: numAcomp > 0 ? finalEstado : "",
+              fechaIngresoAcompanante: numAcomp > 0 && finalEstado === "Ingresó" ? (fechaIngreso || local.fechaIngreso || "") : "",
+              validadoPorAcompanante: numAcomp > 0 && finalEstado === "Ingresó" ? (validadoPor || local.validadoPor || "") : ""
             };
           });
 

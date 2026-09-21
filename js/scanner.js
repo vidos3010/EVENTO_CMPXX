@@ -151,34 +151,24 @@ const ScannerService = {
       const resultado = await SheetsService.validarIngresoEnSheets(codigo, validador);
 
       if (!resultado || !resultado.success) {
-        // ERROR O PAGO PENDIENTE
+        // ERROR / NO ENCONTRADO
         QRManager.reproducirSonido("error");
-        
-        if (resultado && resultado.estado === "PAGO_PENDIENTE") {
-          this.mostrarResultadoModal({
-            tipo: "pago_pendiente",
-            titulo: "⚠️ PAGO NO CONFIRMADO",
-            mensaje: resultado.mensaje || "El abono de este acompañante aún no ha sido aprobado.",
-            asistente: resultado.asistente,
-            codigo: codigo
-          });
-        } else {
-          this.mostrarResultadoModal({
-            tipo: "error",
-            titulo: "❌ BOLETO NO VÁLIDO",
-            mensaje: resultado?.mensaje || "El código escaneado no está registrado en el sistema.",
-            codigo: codigo
-          });
-        }
+        this.mostrarResultadoModal({
+          tipo: "error",
+          titulo: "❌ BOLETO NO VÁLIDO",
+          mensaje: resultado?.mensaje || "El código escaneado no corresponde a ninguna reserva registrada.",
+          codigo: codigo
+        });
       } else if (resultado.estado === "YA_INGRESADO") {
         // ALERTA DUPLICADO
         QRManager.reproducirSonido("warning");
         this.mostrarResultadoModal({
           tipo: "warning",
-          titulo: resultado.esAcompanante ? "⚠️ BOLETO DE ACOMPAÑANTE YA UTILIZADO" : "⚠️ BOLETO TITULAR YA UTILIZADO",
-          mensaje: "Este pase ya fue registrado previamente en la puerta de ingreso.",
+          titulo: resultado.esPaseDoble ? "⚠️ BOLETO YA UTILIZADO (PASE DOBLE)" : "⚠️ BOLETO YA UTILIZADO (PASE INDIVIDUAL)",
+          mensaje: `Este boleto (${resultado.esPaseDoble ? 'Válido para 2 Personas' : 'Válido para 1 Persona'}) ya fue registrado previamente en portería.`,
           asistente: resultado.asistente,
-          esAcompanante: resultado.esAcompanante,
+          esPaseDoble: resultado.esPaseDoble,
+          personas: resultado.personas,
           fechaIngreso: resultado.fechaPrimerIngreso,
           validadoPor: resultado.validadoPor
         });
@@ -187,10 +177,13 @@ const ScannerService = {
         QRManager.reproducirSonido("success");
         this.mostrarResultadoModal({
           tipo: "success",
-          titulo: resultado.esAcompanante ? "✅ INGRESO ACOMPAÑANTE AUTORIZADO" : "✅ INGRESO TITULAR AUTORIZADO",
-          mensaje: "¡Bienvenido al evento del Colegio Médico!",
+          titulo: resultado.esPaseDoble ? "✅ INGRESO AUTORIZADO (2 PERSONAS)" : "✅ INGRESO AUTORIZADO (1 PERSONA)",
+          mensaje: resultado.esPaseDoble 
+            ? "¡Acceso concedido para el Médico Colegiado y su Acompañante!" 
+            : "¡Acceso concedido para el Médico Colegiado!",
           asistente: resultado.asistente,
-          esAcompanante: resultado.esAcompanante,
+          esPaseDoble: resultado.esPaseDoble,
+          personas: resultado.personas,
           horaIngreso: resultado.horaIngreso
         });
 
@@ -230,76 +223,64 @@ const ScannerService = {
         </div>
       `;
     } else if (info.tipo === "success") {
-      const a = info.asistente;
-      const esAcomp = info.esAcompanante;
+      const a = info.asistente || {};
+      const esDoble = info.esPaseDoble;
+      const nombreAcomp = (a.nombresAcompanantes && a.nombresAcompanantes !== "Ninguno" && String(a.nombresAcompanantes).trim() !== "")
+        ? a.nombresAcompanantes
+        : "Acompañante Registrado";
 
       html = `
-        <div class="text-center ${esAcomp ? 'bg-[#380036] border-b-2 border-amber-400' : 'bg-emerald-600'} text-white p-6 rounded-t-2xl">
-          <div class="w-16 h-16 bg-white ${esAcomp ? 'text-[#380036]' : 'text-emerald-600'} rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+        <div class="text-center bg-gradient-to-r from-[#200530] to-[#4a154b] text-white p-6 rounded-t-2xl border-b-2 border-amber-400">
+          <div class="w-16 h-16 bg-amber-400 text-[#200530] rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
-          <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider mb-1 text-amber-300">
-            ${esAcomp ? 'PASE ACOMPAÑANTE AUTORIZADO (1 PERSONA)' : 'PASE TITULAR AUTORIZADO (1 PERSONA)'}
+          <span class="inline-block px-3.5 py-1 bg-amber-400 text-[#200530] rounded-full text-xs font-black uppercase tracking-wider mb-1.5 shadow-sm">
+            ${esDoble ? '🎟️ PASE DOBLE AUTORIZADO (2 PERSONAS)' : '👨‍⚕️ PASE INDIVIDUAL AUTORIZADO (1 PERSONA)'}
           </span>
           <h3 class="text-2xl font-black">${info.titulo}</h3>
-          <p class="text-xs text-purple-100 mt-1">${info.mensaje}</p>
+          <p class="text-xs text-purple-200 mt-1 font-medium">${info.mensaje}</p>
         </div>
 
         <div class="p-6 space-y-4 bg-white">
-          <!-- Datos del Asistente -->
-          <div class="border-b border-slate-100 pb-3 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              ${esAcomp ? 'Invitado / Acompañante de' : 'Médico Colegiado Titular'}
+          <!-- Datos del Médico Colegiado -->
+          <div class="border-b border-purple-100 pb-3 text-center">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-900/60">
+              Médico Colegiado Titular
             </span>
             <h4 class="text-xl font-extrabold text-[#380036] mt-0.5">
-              ${esAcomp ? (a.nombresAcompanantes && a.nombresAcompanantes !== 'Ninguno' ? a.nombresAcompanantes : `Invitado de Dr(a). ${a.nombres}`) : a.nombres}
+              ${a.nombres || 'Colegiado'}
             </h4>
-            <div class="flex items-center justify-center gap-2 mt-1 font-semibold text-xs text-slate-600">
-              <span class="bg-purple-100 text-[#380036] px-2.5 py-0.5 rounded-md font-bold">CMP: ${a.cmp}</span>
+            <div class="flex items-center justify-center gap-2 mt-1.5 font-semibold text-xs text-slate-600">
+              <span class="bg-purple-100 text-[#380036] px-2.5 py-0.5 rounded-md font-extrabold">CMP: ${a.cmp || '--'}</span>
               ${a.dni ? `<span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md">DNI: ${a.dni}</span>` : ''}
             </div>
-            ${esAcomp ? `<p class="text-xs text-emerald-800 font-bold mt-1">✓ Abono de S/ 20.00 Aprobado</p>` : `<p class="text-xs text-slate-500 italic mt-1">${a.especialidad || 'Médico Cirujano'}</p>`}
+            <p class="text-xs text-slate-500 italic mt-1 font-medium">${a.especialidad || 'Médico Cirujano'}</p>
           </div>
 
-          <!-- Detalles adicionales -->
+          <!-- Si es Pase Doble: Mostrar Acompañante Validado -->
+          ${esDoble ? `
+            <div class="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl text-center space-y-0.5">
+              <span class="text-[10px] font-black text-amber-900 uppercase tracking-wide block">👥 ACOMPAÑANTE AUTORIZADO (INGRESÓ JUNTO AL TITULAR)</span>
+              <p class="text-sm font-black text-[#380036]">${nombreAcomp}</p>
+              <span class="text-[10px] font-bold text-emerald-800 block mt-0.5">✓ 2 personas contabilizadas en aforo de sala</span>
+            </div>
+          ` : ''}
+
+          <!-- Detalles de ingreso -->
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-              <span class="text-slate-400 block text-[10px] uppercase font-bold">Tipo de Pase</span>
+            <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+              <span class="text-purple-900/60 block text-[10px] uppercase font-bold">Modalidad</span>
               <span class="font-extrabold text-slate-800 text-xs">
-                ${esAcomp ? 'Acompañante (1 Pers)' : 'Titular (1 Pers)'}
+                ${esDoble ? 'Pase Doble (2 Pers)' : 'Individual (1 Pers)'}
               </span>
             </div>
-            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-              <span class="text-slate-400 block text-[10px] uppercase font-bold">Hora de Ingreso</span>
+            <div class="bg-purple-50/60 p-2.5 rounded-xl border border-purple-100">
+              <span class="text-purple-900/60 block text-[10px] uppercase font-bold">Hora de Ingreso</span>
               <span class="font-extrabold text-emerald-700 text-xs">${info.horaIngreso || 'Ahora'}</span>
             </div>
           </div>
-
-          <!-- Si es Titular y tiene Acompañante pendiente de ingreso -->
-          ${!esAcomp && parseInt(a.acompanantes || 0) > 0 ? `
-            <div class="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-[#380036]">Pase de Acompañante Asociado:</span>
-                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full ${
-                  (a.estadoAcompanante === 'Ingresó' || a.estadoAcompanante === 'Asistió')
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : (a.estadoPago === 'Aprobado' || a.estadoPago === 'Pagado')
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
-                }">
-                  ${(a.estadoAcompanante === 'Ingresó' || a.estadoAcompanante === 'Asistió') ? '✓ Ya Ingresó' : ((a.estadoPago === 'Aprobado' || a.estadoPago === 'Pagado') ? '⏳ Pendiente' : '🔒 Pago Pend.')}
-                </span>
-              </div>
-              
-              ${(a.estadoPago === 'Aprobado' || a.estadoPago === 'Pagado') && a.estadoAcompanante !== 'Ingresó' && a.estadoAcompanante !== 'Asistió' ? `
-                <button type="button" onclick="ScannerService.validarAcompananteDirecto('${a.idReserva}')" class="w-full py-2 bg-[#380036] hover:bg-[#200530] text-amber-300 font-bold text-xs rounded-lg shadow-sm transition-all flex items-center justify-center gap-1">
-                  <span>🎟️ Validar Ingreso de Acompañante Ahora</span>
-                </button>
-              ` : ''}
-            </div>
-          ` : ''}
 
           <!-- Botón de acción -->
           <div class="pt-2">
@@ -312,44 +293,9 @@ const ScannerService = {
           </div>
         </div>
       `;
-    } else if (info.tipo === "pago_pendiente") {
-      const a = info.asistente || {};
-      html = `
-        <div class="text-center bg-rose-700 text-white p-6 rounded-t-2xl">
-          <div class="w-16 h-16 bg-white text-rose-700 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg animate-bounce">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider mb-1 text-amber-300">
-            PAGO NO CONFIRMADO
-          </span>
-          <h3 class="text-2xl font-black">${info.titulo}</h3>
-          <p class="text-xs text-rose-100 mt-1">${info.mensaje}</p>
-        </div>
-
-        <div class="p-6 space-y-4 bg-white">
-          <div class="bg-rose-50 border-2 border-rose-300 rounded-xl p-3.5 text-center text-xs text-rose-950 space-y-1">
-            <p class="font-bold">El abono de S/ 20.00 del acompañante aún no ha sido aprobado en administración.</p>
-            <p class="text-slate-600">Verifique con el administrador del evento para validar el voucher antes de permitir el acceso.</p>
-          </div>
-
-          <div class="text-center border-t border-slate-100 pt-3">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Médico Colegiado Responsable</span>
-            <h4 class="text-lg font-bold text-slate-800 mt-0.5">${a.nombres || 'Colegiado'}</h4>
-            <p class="text-xs text-slate-600 font-semibold mt-1">CMP: ${a.cmp || '--'} | N° Operación: ${a.nroOperacion || 'Sin registrar'}</p>
-          </div>
-
-          <div class="pt-2">
-            <button onclick="ScannerService.cerrarModalResultado()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow transition-all">
-              Entendido / Cerrar
-            </button>
-          </div>
-        </div>
-      `;
     } else if (info.tipo === "warning") {
       const a = info.asistente || {};
-      const esAcomp = info.esAcompanante;
+      const esDoble = info.esPaseDoble;
 
       html = `
         <div class="text-center bg-amber-500 text-white p-6 rounded-t-2xl">
@@ -359,7 +305,7 @@ const ScannerService = {
             </svg>
           </div>
           <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider mb-1">
-            DUPLICADO DETECTADO
+            BOLETO YA REGISTRADO
           </span>
           <h3 class="text-xl font-black">${info.titulo}</h3>
           <p class="text-xs text-amber-100 mt-1">${info.mensaje}</p>
@@ -374,10 +320,11 @@ const ScannerService = {
 
           <div class="text-center border-t border-slate-100 pt-3">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              ${esAcomp ? 'Acompañante de' : 'Titular del Boleto'}
+              ${esDoble ? 'Pase Doble (2 Personas)' : 'Pase Individual (1 Persona)'}
             </span>
             <h4 class="text-lg font-bold text-slate-800 mt-0.5">${a.nombres || 'Asistente'}</h4>
             <p class="text-xs text-slate-600 font-semibold mt-1">CMP: ${a.cmp || '--'} | DNI: ${a.dni || '--'}</p>
+            ${esDoble && a.nombresAcompanantes ? `<p class="text-xs text-purple-900 font-bold mt-1">Acompañante: ${a.nombresAcompanantes}</p>` : ''}
           </div>
 
           <div class="pt-2">
@@ -420,14 +367,6 @@ const ScannerService = {
 
     content.innerHTML = html;
     modal.classList.remove("hidden");
-  },
-
-  /**
-   * Validar directamente el acompañante desde el modal de éxito del titular
-   */
-  async validarAcompananteDirecto(idReserva) {
-    this.cerrarModalResultado();
-    await this.procesarCodigoEscaneado(`${idReserva}-ACOMP1`);
   },
 
   /**

@@ -22,8 +22,8 @@ const APP_CONFIG = {
     dressCode: "Elegante / Fiesta",
     limiteAforo: 350,
     permitirAcompanantes: true,
-    maxAcompanantes: 3,
-    costoAcompanante: 20
+    maxAcompanantes: 1,
+    costoAcompanante: 0
   },
 
   // Claves para Almacenamiento Local (LocalStorage)

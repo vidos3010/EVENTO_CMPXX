@@ -259,11 +259,11 @@ const ScannerService = {
             <p class="text-xs text-slate-500 italic mt-1 font-medium">${a.especialidad || 'Médico Cirujano'}</p>
           </div>
 
-          <!-- Si es Pase Doble: Mostrar Acompañante Validado -->
+          <!-- Si es Pase Doble: Mostrar Pase Doble Validado -->
           ${esDoble ? `
-            <div class="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl text-center space-y-0.5">
-              <span class="text-[10px] font-black text-amber-900 uppercase tracking-wide block">👥 ACOMPAÑANTE AUTORIZADO (INGRESÓ JUNTO AL TITULAR)</span>
-              <p class="text-sm font-black text-[#380036]">${nombreAcomp}</p>
+            <div class="p-3 bg-amber-50 border-2 border-amber-300 rounded-2xl text-center space-y-0.5">
+              <span class="text-[10px] font-black text-amber-900 uppercase tracking-wide block">👥 MODALIDAD: PASE DOBLE (INCLUYE 1 ACOMPAÑANTE)</span>
+              <span class="text-xs font-black text-[#380036] block">Ingresó Titular + 1 Acompañante</span>
               <span class="text-[10px] font-bold text-emerald-800 block mt-0.5">✓ 2 personas contabilizadas en aforo de sala</span>
             </div>
           ` : ''}

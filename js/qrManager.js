@@ -161,15 +161,12 @@ const QRManager = {
 
           <!-- Caja de Acompañante si es Pase Doble -->
           ${esPaseDoble ? `
-            <div class="p-3.5 bg-gradient-to-r from-amber-50 to-purple-50 border-2 border-amber-300/80 rounded-2xl text-center space-y-1 shadow-xs">
+            <div class="p-3 bg-gradient-to-r from-amber-50 via-purple-50 to-amber-50 border-2 border-amber-300/80 rounded-2xl text-center space-y-1 shadow-xs">
               <div class="flex items-center justify-center gap-1.5 text-xs font-black text-amber-950">
                 <span>👥</span>
-                <span>ACOMPAÑANTE AUTORIZADO (INCLUIDO):</span>
+                <span>INCLUYE 1 ACOMPAÑANTE</span>
               </div>
-              <p class="text-sm font-extrabold text-[#380036]">
-                ${nombreAcomp}
-              </p>
-              <span class="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+              <span class="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-300">
                 ✓ Ingreso autorizado para 2 personas con este único código QR
               </span>
             </div>
@@ -416,14 +413,11 @@ const QRManager = {
 
             ${esDoble ? `
               <div style="margin-top: 12px; padding: 10px 14px; background: #fefce8; border: 1.5px solid #fde047; border-radius: 12px; text-align: center;">
-                <span style="font-size: 10px; font-weight: 800; color: #854d0e; text-transform: uppercase; display: block;">
-                  👥 ACOMPAÑANTE AUTORIZADO (INCLUIDO)
-                </span>
-                <span style="font-size: 13px; font-weight: 900; color: #380036; display: block; margin-top: 2px;">
-                  ${nombreAcomp}
+                <span style="font-size: 11px; font-weight: 900; color: #854d0e; text-transform: uppercase; display: block;">
+                  👥 INCLUYE 1 ACOMPAÑANTE
                 </span>
                 <span style="font-size: 10px; font-weight: 700; color: #15803d; margin-top: 3px; display: block;">
-                  ✓ Validez: 2 Personas (Titular + Acompañante)
+                  ✓ Validez: 2 Personas (Titular + 1 Acompañante)
                 </span>
               </div>
             ` : ''}
@@ -607,8 +601,8 @@ const QRManager = {
         `⏰ *Hora:* ${config.hora}\n` +
         `📍 *Lugar:* ${config.lugar}\n` +
         `🔢 *Código de Reserva:* ${a.idReserva}\n` +
-        `👥 *Acompañante Autorizado:* ${nombreAcomp}\n` +
-        `🎫 *Validez:* PASE DOBLE (2 Personas: Titular + 1 Acompañante)\n\n` +
+        `👥 *Modalidad:* Pase Doble (Válido para 2 Personas: Titular + 1 Acompañante)\n` +
+        `🎫 *Validez:* Ingreso autorizado para 2 personas con este único código QR\n\n` +
         `📲 *SU CÓDIGO QR DE ACCESO (Haga clic para ver imagen):*\n${qrImageUrl}\n\n` +
         (webTicketUrl ? `🎫 *VER BOLETO DIGITAL EN LÍNEA:*\n${webTicketUrl}\n\n` : "") +
         `_Presente este único código QR en la entrada de La Katedral para el ingreso de ambas personas._`;

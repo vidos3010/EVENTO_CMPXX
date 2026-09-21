@@ -29,21 +29,6 @@ const RegistroService = {
         this.verificarCMPEnTiempoReal(e.target.value, true);
       });
     }
-
-    // Control de acompañante (mostrar/ocultar campo de nombre de acompañante)
-    const selectAcompanantes = document.getElementById("reg-acompanantes");
-    const containerNombreAcomp = document.getElementById("container-nombre-acompanante");
-
-    if (selectAcompanantes) {
-      selectAcompanantes.addEventListener("change", (e) => {
-        const val = parseInt(e.target.value || 0);
-        if (val > 0) {
-          if (containerNombreAcomp) containerNombreAcomp.classList.remove("hidden");
-        } else {
-          if (containerNombreAcomp) containerNombreAcomp.classList.add("hidden");
-        }
-      });
-    }
   },
 
   /**
@@ -221,11 +206,7 @@ const RegistroService = {
     }
 
     // 3. DATOS DE ACOMPAÑANTE (100% GRATUITO)
-    let nombresAcompanantes = "Ninguno";
-    if (numAcompanantes > 0) {
-      const inputNombreAcomp = document.getElementById("reg-nombres-acompanante")?.value.trim();
-      nombresAcompanantes = inputNombreAcomp || "Acompañante Registrado";
-    }
+    const nombresAcompanantes = numAcompanantes > 0 ? "1 Acompañante" : "Ninguno";
 
     // Cambiar estado del botón a cargando
     if (btnSubmit) {
@@ -371,9 +352,6 @@ const RegistroService = {
     const form = document.getElementById("form-registro");
 
     if (form) form.reset();
-
-    const containerNombreAcomp = document.getElementById("container-nombre-acompanante");
-    if (containerNombreAcomp) containerNombreAcomp.classList.add("hidden");
 
     const feedback = document.getElementById("cmp-padron-feedback");
     if (feedback) {

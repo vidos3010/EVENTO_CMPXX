@@ -950,14 +950,18 @@ const AdminService = {
       StorageService.restablecerEstado(idReserva, "titular");
       if (typeof SheetsService !== "undefined" && SheetsService.isConfigured()) {
         SheetsService.restablecerEstadoEnSheets(idReserva, "titular");
+        const act = StorageService.buscarAsistente(idReserva);
+        if (act) SheetsService.registrarEnSheets(act).catch(() => {});
       }
-      App.showToast(`Estado del Titular (${asistente.nombres}) restablecido a Pendiente.`, "info");
+      App.showToast(`Estado del Titular (${asistente.nombres}) restablecido a Pendiente y guardado.`, "info");
     } else {
       StorageService.marcarIngreso(idReserva, "Admin Manual", "titular");
       if (typeof SheetsService !== "undefined" && SheetsService.isConfigured()) {
         SheetsService.validarIngresoEnSheets(idReserva, "Admin Manual", "titular");
+        const act = StorageService.buscarAsistente(idReserva);
+        if (act) SheetsService.registrarEnSheets(act).catch(() => {});
       }
-      App.showToast(`¡Ingreso Titular de ${asistente.nombres} validado con éxito!`, "success");
+      App.showToast(`¡Ingreso Titular de ${asistente.nombres} validado y guardado automáticamente!`, "success");
       if (typeof QRManager !== "undefined") {
         QRManager.reproducirSonido("success");
       }
@@ -986,14 +990,18 @@ const AdminService = {
       StorageService.restablecerEstado(idReserva, "acompanante");
       if (typeof SheetsService !== "undefined" && SheetsService.isConfigured()) {
         SheetsService.restablecerEstadoEnSheets(idReserva, "acompanante");
+        const act = StorageService.buscarAsistente(idReserva);
+        if (act) SheetsService.registrarEnSheets(act).catch(() => {});
       }
-      App.showToast(`Estado del Acompañante de ${asistente.nombres} restablecido a Pendiente.`, "info");
+      App.showToast(`Estado del Acompañante de ${asistente.nombres} restablecido a Pendiente y guardado.`, "info");
     } else {
       StorageService.marcarIngreso(`${idReserva}-ACOMP1`, "Admin Manual", "acompanante");
       if (typeof SheetsService !== "undefined" && SheetsService.isConfigured()) {
         SheetsService.validarIngresoEnSheets(`${idReserva}-ACOMP1`, "Admin Manual", "acompanante");
+        const act = StorageService.buscarAsistente(idReserva);
+        if (act) SheetsService.registrarEnSheets(act).catch(() => {});
       }
-      App.showToast(`¡Ingreso de Acompañante de ${asistente.nombres} validado con éxito!`, "success");
+      App.showToast(`¡Ingreso de Acompañante de ${asistente.nombres} validado y guardado automáticamente!`, "success");
       if (typeof QRManager !== "undefined") {
         QRManager.reproducirSonido("success");
       }

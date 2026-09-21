@@ -366,13 +366,13 @@ const SheetsService = {
               }
             }
 
-            let fechaIngreso = String(this.getField(row, ["Fecha y Hora Ingreso", "fechaIngreso"]) || local.fechaIngreso || "");
+            let fechaIngreso = String(this.getField(row, ["Fecha y Hora Ingreso", "fechaIngreso"]) || "");
             if (fechaIngreso.includes("drive.google.com") || fechaIngreso.includes("googleusercontent.com")) {
               if (!driveUrl) driveUrl = fechaIngreso;
               fechaIngreso = "";
             }
 
-            let validadoPor = String(this.getField(row, ["Validado Por", "validadoPor"]) || local.validadoPor || "");
+            let validadoPor = String(this.getField(row, ["Validado Por", "validadoPor"]) || "");
             if (validadoPor.includes("drive.google.com") || validadoPor.includes("googleusercontent.com")) {
               if (!driveUrl) driveUrl = validadoPor;
               validadoPor = "";
@@ -390,34 +390,51 @@ const SheetsService = {
               (driveUrl && String(driveUrl).trim() !== "")
             );
 
-            let fechaIngresoAcompanante = String(this.getField(row, ["Fecha y Hora Ingreso Acompañante", "fechaIngresoAcompanante"]) || local.fechaIngresoAcompanante || "");
-            let validadoPorAcompanante = String(this.getField(row, ["Validado Por Acompañante", "validadoPorAcompanante"]) || local.validadoPorAcompanante || "");
+            let fechaIngresoAcompanante = String(this.getField(row, ["Fecha y Hora Ingreso Acompañante", "fechaIngresoAcompanante"]) || "");
+            let validadoPorAcompanante = String(this.getField(row, ["Validado Por Acompañante", "validadoPorAcompanante"]) || "");
 
             const estadoRemote = String(this.getField(row, ["Estado Asistencia", "estado", "Asistencia"]) || "").trim();
             const cleanEstadoRemote = estadoRemote.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let finalEstadoTitular = "Pendiente";
-            if (cleanEstadoRemote === "ingreso" || cleanEstadoRemote === "asistio" || (fechaIngreso && fechaIngreso.length > 3)) {
+            
+            if (cleanEstadoRemote === "ingreso" || cleanEstadoRemote === "asistio" || cleanEstadoRemote === "presente" || cleanEstadoRemote === "si") {
               finalEstadoTitular = "Ingresó";
+              fechaIngreso = fechaIngreso || local.fechaIngreso || "";
+              validadoPor = validadoPor || local.validadoPor || "Escáner QR";
+            } else if (cleanEstadoRemote === "pendiente") {
+              finalEstadoTitular = "Pendiente";
+              fechaIngreso = "";
+              validadoPor = "";
             } else if (StorageService.esIngresado(local, "titular")) {
               finalEstadoTitular = "Ingresó";
-              if (!fechaIngreso) fechaIngreso = local.fechaIngreso || "";
-              if (!validadoPor) validadoPor = local.validadoPor || "";
+              fechaIngreso = local.fechaIngreso || "";
+              validadoPor = local.validadoPor || "";
             } else {
-              finalEstadoTitular = "Pendiente";
+              finalEstadoTitular = local.estado || "Pendiente";
+              fechaIngreso = local.fechaIngreso || "";
+              validadoPor = local.validadoPor || "";
             }
 
             const estadoAcompRemote = String(this.getField(row, ["Estado Asistencia Acompañante", "estadoAcompanante"]) || "").trim();
             const cleanEstadoAcompRemote = estadoAcompRemote.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let finalEstadoAcomp = "";
             if (numAcomp > 0) {
-              if (cleanEstadoAcompRemote === "ingreso" || cleanEstadoAcompRemote === "asistio" || (fechaIngresoAcompanante && fechaIngresoAcompanante.length > 3)) {
+              if (cleanEstadoAcompRemote === "ingreso" || cleanEstadoAcompRemote === "asistio" || cleanEstadoAcompRemote === "presente" || cleanEstadoAcompRemote === "si") {
                 finalEstadoAcomp = "Ingresó";
+                fechaIngresoAcompanante = fechaIngresoAcompanante || local.fechaIngresoAcompanante || "";
+                validadoPorAcompanante = validadoPorAcompanante || local.validadoPorAcompanante || "Escáner QR";
+              } else if (cleanEstadoAcompRemote === "pendiente") {
+                finalEstadoAcomp = "Pendiente";
+                fechaIngresoAcompanante = "";
+                validadoPorAcompanante = "";
               } else if (StorageService.esIngresado(local, "acompanante")) {
                 finalEstadoAcomp = "Ingresó";
-                if (!fechaIngresoAcompanante) fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
-                if (!validadoPorAcompanante) validadoPorAcompanante = local.validadoPorAcompanante || "";
+                fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
+                validadoPorAcompanante = local.validadoPorAcompanante || "";
               } else {
-                finalEstadoAcomp = "Pendiente";
+                finalEstadoAcomp = local.estadoAcompanante || "Pendiente";
+                fechaIngresoAcompanante = local.fechaIngresoAcompanante || "";
+                validadoPorAcompanante = local.validadoPorAcompanante || "";
               }
             }
 

@@ -54,10 +54,10 @@ const APP_CONFIG = {
   // Obtener la URL de Google Apps Script configurada o predeterminada
   getAppsScriptUrl() {
     const saved = localStorage.getItem(this.STORAGE_KEYS.APPS_SCRIPT_URL);
-    if (saved && !saved.includes("AKfycbwhbSnyTQdQzpcXbxpW9sQS6P4XnVpnE1_wDNa_z1BU0MmS1GoddXFN_swo7BhpGH9e") && !saved.includes("AKfycbx2jeudv9-6wgNHFyo35PQtjj72bduyiKVcIYPNmDj38AhcIQLuHTNAvSzanBfTD3ne")) {
+    if (saved && !saved.includes("AKfycbwhbSnyTQdQzpcXbxpW9sQS6P4XnVpnE1_wDNa_z1BU0MmS1GoddXFN_swo7BhpGH9e") && !saved.includes("AKfycbx2jeudv9-6wgNHFyo35PQtjj72bduyiKVcIYPNmDj38AhcIQLuHTNAvSzanBfTD3ne") && !saved.includes("AKfycbxR2dFErigvIcquLoAUZF4WhY2TUs6AJqFReXAKKvTIckBdfTSB1s1O_PrmtChnF8wI")) {
       return saved.trim();
     }
-    return "https://script.google.com/macros/s/AKfycbxR2dFErigvIcquLoAUZF4WhY2TUs6AJqFReXAKKvTIckBdfTSB1s1O_PrmtChnF8wI/exec";
+    return "https://script.google.com/macros/s/AKfycbyQZYFK8p9K9Ouj4qVlj_v2skPmez7NaA6SDUqmWXOkag-akzBbfRnTW7hair_6pBR2/exec";
   },
 
   // Guardar la URL de Google Apps Script

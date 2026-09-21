@@ -545,19 +545,26 @@ function doPost(e) {
       const fechaIngresoAcompIndex = headers.indexOf("Fecha y Hora Ingreso Acompañante");
       const validadorAcompIndex = headers.indexOf("Validado Por Acompañante");
       
+      const cleanQuery = codigo.toLowerCase();
+      const cleanNum = cleanQuery.replace(/^0+/, "") || cleanQuery;
+      
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const rowId = String(row[idIndex]).trim();
-        const rowCmp = String(row[cmpIndex]).trim();
-        const rowQrTit = qrTitIndex !== -1 ? String(row[qrTitIndex]).trim() : "";
-        const rowQrAcomp = qrAcompIndex !== -1 ? String(row[qrAcompIndex]).trim() : "";
+        const rowId = String(row[idIndex] || "").trim().toLowerCase();
+        const rowCmp = String(row[cmpIndex] || "").trim().toLowerCase();
+        const cleanRowCmp = rowCmp.replace(/^0+/, "") || rowCmp;
+        const rowQrTit = qrTitIndex !== -1 ? String(row[qrTitIndex] || "").trim().toLowerCase() : "";
+        const rowQrAcomp = qrAcompIndex !== -1 ? String(row[qrAcompIndex] || "").trim().toLowerCase() : "";
         
         if (
-          rowId === codigo ||
-          rowCmp === codigo ||
-          (rowQrTit && rowQrTit === codigo) ||
-          (rowQrAcomp && rowQrAcomp === codigo) ||
-          rowId + "-ACOMP1" === codigo
+          rowId === cleanQuery ||
+          rowCmp === cleanQuery ||
+          cleanRowCmp === cleanNum ||
+          (rowQrTit && rowQrTit === cleanQuery) ||
+          (rowQrAcomp && rowQrAcomp === cleanQuery) ||
+          rowId + "-acomp1" === cleanQuery ||
+          rowId + "-acomp" === cleanQuery ||
+          cleanQuery.startsWith(rowId)
         ) {
           const fila = i + 2;
           

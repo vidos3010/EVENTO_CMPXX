@@ -822,6 +822,7 @@ const StorageService = {
 
       lista[index] = asistente;
       this.guardarTodos(lista);
+      this.guardarUltimaReserva(asistente);
 
       return {
         success: true,
@@ -855,6 +856,7 @@ const StorageService = {
 
     lista[index] = asistente;
     this.guardarTodos(lista);
+    this.guardarUltimaReserva(asistente);
 
     return {
       success: true,
